@@ -1,7 +1,7 @@
-use macroquad::prelude::*;
+use macroquad::prelude as mq;
 
-fn window_conf() -> Conf {
-    Conf {
+fn window_conf() -> mq::Conf {
+    mq::Conf {
         window_title: "Nyx".to_owned(),
         window_width: 800,
         window_height: 600,
@@ -13,14 +13,14 @@ fn window_conf() -> Conf {
 #[macroquad::main(window_conf)]
 async fn main() {
     loop {
-        clear_background(LIGHTGRAY);
+        mq::clear_background(mq::LIGHTGRAY);
 
-        draw_line(40.0, 40.0, 100.0, 200.0, 15.0, BLUE);
-        draw_rectangle(screen_width() / 2.0 - 60.0, 100.0, 120.0, 60.0, GREEN);
-        draw_circle(screen_width() - 30.0, screen_height() - 30.0, 15.0, YELLOW);
+        mq::draw_line(40.0, 40.0, 100.0, 200.0, 15.0, mq::BLUE);
+        mq::draw_rectangle(mq::screen_width() / 2.0 - 60.0, 100.0, 120.0, 60.0, mq::GREEN);
+        mq::draw_circle(mq::screen_width() - 30.0, mq::screen_height() - 30.0, 15.0, mq::YELLOW);
 
-        draw_text("HELLO", 20.0, 20.0, 30.0, DARKGRAY);
+        mq::draw_text("HELLO", 20.0, 20.0, 30.0, mq::DARKGRAY);
 
-        next_frame().await
+        mq::next_frame().await
     }
 }
