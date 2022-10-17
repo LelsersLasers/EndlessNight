@@ -1,3 +1,5 @@
+pub mod vector;
+
 use macroquad::prelude as mq;
 
 fn window_conf() -> mq::Conf {
