@@ -1,4 +1,4 @@
-use std::ops::{Add, Mul, Sub};
+use std::ops::{Add, Mul, Sub, AddAssign, SubAssign, MulAssign};
 
 #[derive(Clone, Copy)]
 pub struct Vector2D {
@@ -21,12 +21,17 @@ impl Vector2D {
     }
     pub fn normalized(&self) -> Vector2D {
         let length = self.calc_length();
-        Self::new(self.x / length.max(0.), self.y / length.max(0.))
+        if length == 0. {
+            *self
+        } else {
+            Vector2D::new(self.x / length.max(0.), self.y / length.max(0.))
+        }
     }
     pub fn with_len(&self, len: f32) -> Vector2D {
         self.normalized() * len
     }
 }
+
 impl Add for Vector2D {
     type Output = Self;
     fn add(self, other: Self) -> Self::Output {
@@ -36,6 +41,15 @@ impl Add for Vector2D {
         }
     }
 }
+impl AddAssign for Vector2D {
+    fn add_assign(&mut self, other: Self) {
+        *self = Self {
+            x: self.x + other.x,
+            y: self.y + other.y,
+        };
+    }
+}
+
 impl Sub for Vector2D {
     type Output = Self;
     fn sub(self, other: Self) -> Self::Output {
@@ -45,6 +59,15 @@ impl Sub for Vector2D {
         }
     }
 }
+impl SubAssign for Vector2D {
+    fn sub_assign(&mut self, other: Self) {
+        *self = Self {
+            x: self.x - other.x,
+            y: self.y - other.y,
+        };
+    }
+}
+
 impl Mul<f32> for Vector2D {
     // scalar multiplication
     type Output = Self;
@@ -55,10 +78,12 @@ impl Mul<f32> for Vector2D {
         }
     }
 }
-impl Mul for Vector2D {
-    // dot product
-    type Output = f32;
-    fn mul(self, other: Self) -> Self::Output {
-        self.x * other.x + self.y * other.y
+impl MulAssign<f32> for Vector2D {
+    // scalar multiplication
+    fn mul_assign(&mut self, scale: f32) {
+        *self = Self {
+            x: self.x * scale,
+            y: self.y * scale,
+        }
     }
 }

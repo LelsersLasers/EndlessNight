@@ -26,15 +26,33 @@ async fn main() {
     let mut image = mq::Image::gen_image_color(START_WIDTH as u16, START_HEIGHT as u16, mq::BLACK);
     let texture = mq::Texture2D::from_image(&image);
 
-    // let dither = DITHER.iter().map(|&x| (x as f32 / 16.) - 0.5).collect::<Vec<f32>>();
+    let mut last_frame = instant::now();
+    let mut delta: f32 = 1.0 / 60.0;
 
     let mut lights: Vec<Light> = Vec::new();
-    lights.push(Light::new(Vector2D::new(300., 300.), 15., 1., mq::YELLOW));
+    lights.push(Light::new(Vector2D::new(300., 300.), 15., 1., mq::GRAY));
 
     loop {
+
+        let mut move_vec = Vector2D::new(0., 0.);
+        if mq::is_key_down(mq::KeyCode::W) {
+            move_vec.y += 1.;
+        }
+        if mq::is_key_down(mq::KeyCode::S) {
+            move_vec.y -= 1.;
+        }
+        if mq::is_key_down(mq::KeyCode::A) {
+            move_vec.x -= 1.;
+        }
+        if mq::is_key_down(mq::KeyCode::D) {
+            move_vec.x += 1.;
+        }
+        lights[0].pt += move_vec.with_len(100. * delta);
+
+
         mq::clear_background(mq::BLACK);
 
-        mq::draw_line(40.0, 40.0, 100.0, 200.0, 15.0, mq::BLUE);
+        mq::draw_line(0., 0., 100.0, 200.0, 15.0, mq::BLUE);
         mq::draw_rectangle(
             mq::screen_width() / 2.0 - 60.0,
             100.0,
@@ -42,15 +60,14 @@ async fn main() {
             60.0,
             mq::GREEN,
         );
+
+
         for light in lights.iter() {
             mq::draw_circle(light.pt.x, light.pt.y, 20., light.color);
         }
 
-        mq::draw_text("HELLO", 20.0, 20.0, 30.0, mq::DARKGRAY);
 
-        let image_data = image.get_image_data_mut();
         let screen_image = mq::get_screen_data();
-        let pre_lighting = screen_image.get_image_data();
 
         for i in 0..START_WIDTH * START_HEIGHT {
             let x = i % START_WIDTH;
@@ -66,12 +83,22 @@ async fn main() {
                             [(((dy.unsigned_abs() % 4) * 4) + (dx.unsigned_abs() % 4)) as usize]
                             as f32
                 {
-                    // image_data[i as usize] = pre_lighting[i as usize];
-                    image_data[i as usize] = mq::GRAY.into();
+                    let screen_px_color = screen_image.get_pixel(x as u32, y as u32);
+                    image.set_pixel(x as u32, y as u32, if screen_px_color == mq::BLACK {
+                        light.color
+                    } else {
+                        screen_px_color
+                    });
+
                     break;
+                } else {
+                    image.set_pixel(x as u32, y as u32, mq::BLACK);
                 }
             }
         }
+
+        delta = (instant::now() - last_frame) as f32 / 1000.;
+        last_frame = instant::now();
 
         texture.update(&image);
         mq::draw_texture_ex(texture, 0., 0., mq::WHITE, mq::DrawTextureParams {
@@ -79,6 +106,7 @@ async fn main() {
             flip_y: true,
             ..Default::default()
         });
+        mq::draw_text(&(format!("FPS {:.0}", 1. / delta)), 20.0, 20.0, 30.0, mq::WHITE);
         mq::next_frame().await
     }
 }
