@@ -1,6 +1,9 @@
+use crate::vector::Vector2D;
 use macroquad::prelude as mq;
-use crate::vector::Vector;
 
 pub struct Camera {
-	pub position: Vector,
+    pub pt: Vector2D,
+    pub offset: Vector2D, // for black bars
+    pub ratio: f32,       // width / height
+    pub scale: f32,
 }
