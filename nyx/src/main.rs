@@ -1,4 +1,6 @@
-pub mod vector;
+mod vector;
+mod light;
+mod camera;
 
 use macroquad::prelude as mq;
 

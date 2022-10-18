@@ -2,9 +2,9 @@ use std::ops::{Add, Sub, Mul};
 
 
 #[derive(Clone, Copy)]
-struct Vector {
-	x: f32,
-	y: f32,
+pub struct Vector {
+	pub x: f32,
+	pub y: f32,
 }
 impl Vector {
 	fn new(x: f32, y: f32) -> Vector {
