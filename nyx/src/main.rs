@@ -37,6 +37,7 @@ async fn main() {
 
     let mut lights: Vec<Light> = Vec::new();
     lights.push(Light::new(Vector2D::new(300., 300.), 15., 1., mq::GRAY));
+    lights.push(Light::new(Vector2D::new(10., 10.), 10., 1., mq::GRAY));
 
 
     loop {
@@ -82,19 +83,20 @@ async fn main() {
         for i in 0..START_WIDTH * START_HEIGHT {
             let x = i % START_WIDTH;
             let y = i / START_WIDTH;
+            let src_y = START_HEIGHT - y - 1;
 
             for light in lights.iter() {
                 let dx = light.pt.x as i32 - x; 
                 let dy = light.pt.y as i32 - y;
                 let dist = ((dx * dx + dy * dy) as f32).sqrt();
 
-                if dist < light.power * 2.
+                if dist < light.power * 3.
                     || dist / light.power
                         <= DITHER
                             [(((dy.unsigned_abs() % DITHER_SIZE) * DITHER_SIZE) + (dx.unsigned_abs() % DITHER_SIZE)) as usize]
                             as f32
                 {
-                    let screen_px_color = image_in.get_pixel(x as u32, y as u32);
+                    let screen_px_color = image_in.get_pixel(x as u32, src_y as u32);
                     image_out.set_pixel(x as u32, y as u32, if screen_px_color == mq::BLACK {
                         light.color
                     } else {
@@ -119,7 +121,6 @@ async fn main() {
             mq::WHITE,
             mq::DrawTextureParams {
                 dest_size: Some(mq::vec2(START_WIDTH as f32, START_HEIGHT as f32)),
-                flip_y: true,
                 ..Default::default()
             }
         );
