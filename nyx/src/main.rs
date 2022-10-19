@@ -23,8 +23,13 @@ fn window_conf() -> mq::Conf {
 
 #[macroquad::main(window_conf)]
 async fn main() {
-    let mut image = mq::Image::gen_image_color(START_WIDTH as u16, START_HEIGHT as u16, mq::BLACK);
-    let texture = mq::Texture2D::from_image(&image);
+
+    let mut camera = mq::Camera2D::from_display_rect(mq::Rect::new(0.0, 0.0, START_WIDTH as f32, START_HEIGHT as f32));
+    camera.render_target = Some(mq::render_target(START_WIDTH as u32, START_HEIGHT as u32));
+
+    // let mut image = mq::Image::gen_image_color(START_WIDTH as u16, START_HEIGHT as u16, mq::BLACK);
+    // let render_to = mq::Texture2D::from_image(&image);
+
 
     let mut last_frame = instant::now();
     let mut delta: f32 = 1.0 / 60.0;
@@ -34,21 +39,22 @@ async fn main() {
 
     loop {
 
-        let mut move_vec = Vector2D::new(0., 0.);
-        if mq::is_key_down(mq::KeyCode::W) {
-            move_vec.y += 1.;
-        }
-        if mq::is_key_down(mq::KeyCode::S) {
-            move_vec.y -= 1.;
-        }
-        if mq::is_key_down(mq::KeyCode::A) {
-            move_vec.x -= 1.;
-        }
-        if mq::is_key_down(mq::KeyCode::D) {
-            move_vec.x += 1.;
-        }
-        lights[0].pt += move_vec.with_len(100. * delta);
+        // let mut move_vec = Vector2D::new(0., 0.);
+        // if mq::is_key_down(mq::KeyCode::W) {
+        //     move_vec.y += 1.;
+        // }
+        // if mq::is_key_down(mq::KeyCode::S) {
+        //     move_vec.y -= 1.;
+        // }
+        // if mq::is_key_down(mq::KeyCode::A) {
+        //     move_vec.x -= 1.;
+        // }
+        // if mq::is_key_down(mq::KeyCode::D) {
+        //     move_vec.x += 1.;
+        // }
+        // lights[0].pt += move_vec;//.with_len(100. * delta);
 
+        mq::set_camera(&camera);
 
         mq::clear_background(mq::BLACK);
 
@@ -67,45 +73,62 @@ async fn main() {
         }
 
 
-        let screen_image = mq::get_screen_data();
+        // mq::get_screen_data();
+        // let d = screen_image.get_image_data();
+        // println!("{}", d.len());
 
-        for i in 0..START_WIDTH * START_HEIGHT {
-            let x = i % START_WIDTH;
-            let y = i / START_WIDTH;
-            for light in lights.iter() {
-                let dx = light.pt.x as i32 - x; 
-                let dy = light.pt.y as i32 - y;
-                let dist = ((dx * dx + dy * dy) as f32).sqrt();
+        // for i in 0..START_WIDTH * START_HEIGHT {
+        //     let x = i % START_WIDTH;
+        //     let y = i / START_WIDTH;
+        //     for light in lights.iter() {
+        //         let dx = light.pt.x as i32 - x; 
+        //         let dy = light.pt.y as i32 - y;
+        //         let dist = ((dx * dx + dy * dy) as f32).sqrt();
 
-                if dist < light.power * 2.
-                    || dist / light.power
-                        <= DITHER
-                            [(((dy.unsigned_abs() % 4) * 4) + (dx.unsigned_abs() % 4)) as usize]
-                            as f32
-                {
-                    let screen_px_color = screen_image.get_pixel(x as u32, y as u32);
-                    image.set_pixel(x as u32, y as u32, if screen_px_color == mq::BLACK {
-                        light.color
-                    } else {
-                        screen_px_color
-                    });
+        //         if dist < light.power * 2.
+        //             || dist / light.power
+        //                 <= DITHER
+        //                     [(((dy.unsigned_abs() % 4) * 4) + (dx.unsigned_abs() % 4)) as usize]
+        //                     as f32
+        //         {
+        //             let screen_px_color = screen_image.get_pixel(x as u32, y as u32);
+        //             image.set_pixel(x as u32, y as u32, if screen_px_color == mq::BLACK {
+        //                 light.color
+        //             } else {
+        //                 screen_px_color
+        //             });
 
-                    break;
-                } else {
-                    image.set_pixel(x as u32, y as u32, mq::BLACK);
-                }
-            }
-        }
+        //             break;
+        //         } else {
+        //             image.set_pixel(x as u32, y as u32, mq::BLACK);
+        //         }
+        //     }
+        // }
 
         delta = (instant::now() - last_frame) as f32 / 1000.;
         last_frame = instant::now();
 
-        texture.update(&image);
-        mq::draw_texture_ex(texture, 0., 0., mq::WHITE, mq::DrawTextureParams {
-            dest_size: Some(mq::vec2(START_WIDTH as f32, START_HEIGHT as f32)),
-            flip_y: true,
-            ..Default::default()
-        });
+        // texture.update(&image);
+        // mq::draw_texture_ex(texture, 0., 0., mq::WHITE, mq::DrawTextureParams {
+        //     dest_size: Some(mq::vec2(START_WIDTH as f32, START_HEIGHT as f32)),
+        //     flip_y: true,
+        //     ..Default::default()
+        // });
+
+        mq::set_camera(&mq::Camera2D::from_display_rect(mq::Rect::new(0., 0., START_WIDTH as f32, START_HEIGHT as f32)));
+
+        mq::draw_texture_ex(
+            camera.render_target.unwrap().texture,
+            0.,
+            0.,
+            mq::WHITE,
+            mq::DrawTextureParams {
+                dest_size: Some(mq::vec2(START_WIDTH as f32, START_HEIGHT as f32)),
+                flip_y: true,
+                ..Default::default()
+            }
+        );
+
         mq::draw_text(&(format!("FPS {:.0}", 1. / delta)), 20.0, 20.0, 30.0, mq::WHITE);
         mq::next_frame().await
     }
