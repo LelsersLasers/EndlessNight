@@ -1,8 +1,9 @@
 mod camera;
 mod light;
 mod vector;
+mod light_modes;
 
-use crate::{/*camera::Camera,*/ light::Light, vector::Vector2D};
+use crate::{/*camera::Camera,*/ light::Light, vector::Vector2D, light_modes::LightMode};
 
 use macroquad::prelude as mq;
 
@@ -37,8 +38,8 @@ async fn main() {
         .set_filter(mq::FilterMode::Nearest);
 
     let mut lights: Vec<Light> = Vec::new();
-    lights.push(Light::new(Vector2D::new(40., 40.), 4.5, 1., mq::GRAY));
-    lights.push(Light::new(Vector2D::new(10., 10.), 1.2, 1., mq::GRAY));
+    lights.push(Light::new(Vector2D::new(40., 40.), 4.5, LightMode::Sin(0.05, 3., 0.), mq::GRAY,));
+    lights.push(Light::new(Vector2D::new(10., 10.), 1.2, LightMode::Sin(0.02, 5., 0.), mq::GRAY));
 
     loop {
         let delta = mq::get_frame_time();
@@ -87,16 +88,20 @@ async fn main() {
         let mut image_out =
             mq::Image::gen_image_color(PX_WIDTH as u16, PX_HEIGHT as u16, mq::BLACK);
 
+        let light_powers = lights.iter().map(|light| light.get_power(mq::get_time() as f32)).collect::<Vec<f32>>();
+
         for x in 0..PX_WIDTH {
             for y in 0..PX_HEIGHT {
                 let src_y = PX_HEIGHT - y - 1;
-                for light in lights.iter() {
+                for (i, light) in lights.iter().enumerate() {
                     let dx = light.pt.x as i32 - x as i32;
                     let dy = light.pt.y as i32 - y as i32;
                     let dist = ((dx * dx + dy * dy) as f32).sqrt();
 
-                    if dist < light.power * 4.
-                        || dist / light.power
+                    // get_power(mq::get_time() as f32)
+
+                    if dist < light_powers[i] * 4.
+                        || dist / light_powers[i]
                             <= DITHER[(((dy.unsigned_abs() % DITHER_SIZE) * DITHER_SIZE)
                                 + (dx.unsigned_abs() % DITHER_SIZE))
                                 as usize] as f32
