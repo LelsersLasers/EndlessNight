@@ -38,14 +38,17 @@ async fn main() {
         .set_filter(mq::FilterMode::Nearest);
 
     let mut lights: Vec<Light> = Vec::new();
-    lights.push(Light::new(Vector2D::new(40., 40.), 4.5, LightMode::Sin(0.05, 3., 0.), mq::GRAY,));
-    lights.push(Light::new(Vector2D::new(10., 10.), 1.2, LightMode::Sin(0.02, 5., 0.), mq::GRAY));
+    lights.push(Light::new(Vector2D::new(40., 40.), 4.25, LightMode::Sin(0.05, 3., 0.), mq::GRAY,));
+    lights.push(Light::new(Vector2D::new(10., 10.), 1.2, LightMode::Sin(0.03, 5., 0.), mq::GRAY));
 
     loop {
         let delta = mq::get_frame_time();
 
         let draw_width = mq::screen_width().min(mq::screen_height() * 16. / 9.);
         let draw_height = mq::screen_height().min(mq::screen_width() * 9. / 16.);
+
+        let top_offset = (mq::screen_height() - draw_height) / 2.;
+        let left_offset = (mq::screen_width() - draw_width) / 2.;
 
         // ------------------------------------------------------------------ //
         let mut move_vec = Vector2D::new(0., 0.);
@@ -72,7 +75,7 @@ async fn main() {
         mq::draw_rectangle(100., 60., 15., 20., mq::GREEN);
 
         for light in lights.iter() {
-            mq::draw_circle(light.pt.x, light.pt.y, 2., mq::YELLOW);
+            mq::draw_rectangle(light.pt.x - 1., light.pt.y - 1., 2., 2., mq::YELLOW);
         }
 
         mq::set_camera(&mq::Camera2D::from_display_rect(mq::Rect::new(
@@ -127,8 +130,8 @@ async fn main() {
 
         mq::draw_texture_ex(
             camera.render_target.unwrap().texture,
-            (mq::screen_width() - draw_width) / 2.,
-            (mq::screen_height() - draw_height) / 2.,
+            left_offset,
+            top_offset,
             mq::WHITE,
             mq::DrawTextureParams {
                 dest_size: Some(mq::vec2(draw_width, draw_height)),
@@ -138,8 +141,8 @@ async fn main() {
 
         mq::draw_text(
             &(format!("FPS {:.0}", 1. / delta)),
-            20.0,
-            20.0,
+            20.0 + left_offset,
+            20.0 + top_offset,
             30.0,
             mq::WHITE,
         );
