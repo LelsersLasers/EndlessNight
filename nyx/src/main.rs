@@ -6,11 +6,11 @@ use crate::{/*camera::Camera,*/ light::Light, vector::Vector2D};
 
 use macroquad::prelude as mq;
 
-const PX_WIDTH: u32 = 192;
-const PX_HEIGHT: u32 = 108;
+const PX_WIDTH: u32 = 256;
+const PX_HEIGHT: u32 = 144;
 
-const START_WIDTH: u32 = PX_WIDTH * 8;
-const START_HEIGHT: u32 = PX_HEIGHT * 8;
+const START_WIDTH: u32 = 1440;
+const START_HEIGHT: u32 = 810;
 
 const DITHER: [i32; 16] = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
 const DITHER_SIZE: u32 = 4;
@@ -36,14 +36,16 @@ async fn main() {
     camera.render_target = Some(mq::render_target(PX_WIDTH as u32, PX_HEIGHT as u32));
     camera.render_target.unwrap().texture.set_filter(mq::FilterMode::Nearest);
 
-    let mut last_frame = instant::now();
-    let mut delta: f32 = 1.0 / 60.0;
-
     let mut lights: Vec<Light> = Vec::new();
-    lights.push(Light::new(Vector2D::new(40., 40.), 2., 1., mq::GRAY));
+    lights.push(Light::new(Vector2D::new(40., 40.), 4., 1., mq::GRAY));
     lights.push(Light::new(Vector2D::new(10., 10.), 1.2, 1., mq::GRAY));
 
     loop {
+        let delta = mq::get_frame_time();
+
+        let draw_width = mq::screen_width().min(mq::screen_height() * 16./9.);
+        let draw_height = mq::screen_height().min(mq::screen_width() * 9./16.);
+
         // ------------------------------------------------------------------ //
         let mut move_vec = Vector2D::new(0., 0.);
         if mq::is_key_down(mq::KeyCode::W) {
@@ -81,9 +83,11 @@ async fn main() {
         mq::set_camera(&mq::Camera2D::from_display_rect(mq::Rect::new(
             0.,
             0.,
-            START_WIDTH as f32,
-            START_HEIGHT as f32,
+            mq::screen_width(),
+            mq::screen_height(),
         )));
+
+        mq::clear_background(mq::WHITE);
 
         let image_in = camera.render_target.unwrap().texture.get_texture_data();
         let mut image_out =
@@ -123,16 +127,13 @@ async fn main() {
         // overwrite the texture with the new image
         camera.render_target.unwrap().texture.update(&image_out);
 
-        delta = (instant::now() - last_frame) as f32 / 1000.;
-        last_frame = instant::now();
-
         mq::draw_texture_ex(
             camera.render_target.unwrap().texture,
-            0.,
-            0.,
+            (mq::screen_width() - draw_width) / 2.,
+            (mq::screen_height() - draw_height) / 2.,
             mq::WHITE,
             mq::DrawTextureParams {
-                dest_size: Some(mq::vec2(START_WIDTH as f32, START_HEIGHT as f32)),
+                dest_size: Some(mq::vec2(draw_width, draw_height)),
                 ..Default::default()
             },
         );
