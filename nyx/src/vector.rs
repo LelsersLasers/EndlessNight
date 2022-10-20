@@ -1,4 +1,4 @@
-use std::ops::{Add, Mul, Sub, AddAssign, SubAssign, MulAssign};
+use std::ops::{Add, AddAssign, Mul, MulAssign, Sub, SubAssign};
 
 #[derive(Clone, Copy)]
 pub struct Vector2D {
