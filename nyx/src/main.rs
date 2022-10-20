@@ -27,24 +27,24 @@ fn window_conf() -> mq::Conf {
 
 #[macroquad::main(window_conf)]
 async fn main() {
-    let mut camera = mq::Camera2D::from_display_rect(mq::Rect::new(
-        0.0,
-        0.0,
-        PX_WIDTH as f32,
-        PX_HEIGHT as f32,
-    ));
+    let mut camera =
+        mq::Camera2D::from_display_rect(mq::Rect::new(0.0, 0.0, PX_WIDTH as f32, PX_HEIGHT as f32));
     camera.render_target = Some(mq::render_target(PX_WIDTH as u32, PX_HEIGHT as u32));
-    camera.render_target.unwrap().texture.set_filter(mq::FilterMode::Nearest);
+    camera
+        .render_target
+        .unwrap()
+        .texture
+        .set_filter(mq::FilterMode::Nearest);
 
     let mut lights: Vec<Light> = Vec::new();
-    lights.push(Light::new(Vector2D::new(40., 40.), 4., 1., mq::GRAY));
+    lights.push(Light::new(Vector2D::new(40., 40.), 4.5, 1., mq::GRAY));
     lights.push(Light::new(Vector2D::new(10., 10.), 1.2, 1., mq::GRAY));
 
     loop {
         let delta = mq::get_frame_time();
 
-        let draw_width = mq::screen_width().min(mq::screen_height() * 16./9.);
-        let draw_height = mq::screen_height().min(mq::screen_width() * 9./16.);
+        let draw_width = mq::screen_width().min(mq::screen_height() * 16. / 9.);
+        let draw_height = mq::screen_height().min(mq::screen_width() * 9. / 16.);
 
         // ------------------------------------------------------------------ //
         let mut move_vec = Vector2D::new(0., 0.);
@@ -68,13 +68,7 @@ async fn main() {
         mq::clear_background(mq::BLACK);
 
         mq::draw_line(0., 0., 30., 25., 20.0, mq::BLUE);
-        mq::draw_rectangle(
-            100.,
-            60.,
-            15.,
-            20.,
-            mq::GREEN,
-        );
+        mq::draw_rectangle(100., 60., 15., 20., mq::GREEN);
 
         for light in lights.iter() {
             mq::draw_circle(light.pt.x, light.pt.y, 2., mq::YELLOW);
@@ -93,34 +87,33 @@ async fn main() {
         let mut image_out =
             mq::Image::gen_image_color(PX_WIDTH as u16, PX_HEIGHT as u16, mq::BLACK);
 
-        for i in 0..PX_WIDTH * PX_HEIGHT {
-            let x = i % PX_WIDTH;
-            let y = i / PX_WIDTH;
-            let src_y = PX_HEIGHT - y - 1;
+        for x in 0..PX_WIDTH {
+            for y in 0..PX_HEIGHT {
+                let src_y = PX_HEIGHT - y - 1;
+                for light in lights.iter() {
+                    let dx = light.pt.x as i32 - x as i32;
+                    let dy = light.pt.y as i32 - y as i32;
+                    let dist = ((dx * dx + dy * dy) as f32).sqrt();
 
-            for light in lights.iter() {
-                let dx = light.pt.x as i32 - x as i32;
-                let dy = light.pt.y as i32 - y as i32;
-                let dist = ((dx * dx + dy * dy) as f32).sqrt();
+                    if dist < light.power * 4.
+                        || dist / light.power
+                            <= DITHER[(((dy.unsigned_abs() % DITHER_SIZE) * DITHER_SIZE)
+                                + (dx.unsigned_abs() % DITHER_SIZE))
+                                as usize] as f32
+                    {
+                        let screen_px_color = image_in.get_pixel(x, src_y);
+                        image_out.set_pixel(
+                            x,
+                            y,
+                            if screen_px_color == mq::BLACK {
+                                light.color
+                            } else {
+                                screen_px_color
+                            },
+                        );
 
-                if dist < light.power * 4.
-                    || dist / light.power
-                        <= DITHER[(((dy.unsigned_abs() % DITHER_SIZE) * DITHER_SIZE)
-                            + (dx.unsigned_abs() % DITHER_SIZE))
-                            as usize] as f32
-                {
-                    let screen_px_color = image_in.get_pixel(x as u32, src_y as u32);
-                    image_out.set_pixel(
-                        x as u32,
-                        y as u32,
-                        if screen_px_color == mq::BLACK {
-                            light.color
-                        } else {
-                            screen_px_color
-                        },
-                    );
-
-                    break;
+                        break;
+                    }
                 }
             }
         }
