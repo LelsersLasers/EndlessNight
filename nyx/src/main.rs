@@ -15,6 +15,7 @@ const START_WIDTH: u32 = 1440;
 const START_HEIGHT: u32 = 810;
 
 const MAZE_SIZE: f32 = 101.;
+const MAZE_START: mq::Vec2 = mq::vec2(((MAZE_SIZE / 2.) as u32) as f32, ((MAZE_SIZE / 2.) as u32) as f32);
 
 const DITHER: [i32; 16] = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
 const DITHER_SIZE: u32 = 4;
@@ -55,13 +56,13 @@ fn create_maze() -> mq::Image {
         mq::Vec2::new(0., 2.),
         mq::Vec2::new(-2., 0.),
     ];
-
-    let mut stack: Vec<mq::Vec2> = vec![mq::Vec2::ONE];
+    let mut stack: Vec<mq::Vec2> = vec![MAZE_START];
 
     let mut maze_image =
             mq::Image::gen_image_color(MAZE_SIZE as u16, MAZE_SIZE as u16, COLOR_BLACK);
 
     let mut rng = rand::thread_rng();
+    let mut first = true;
 
     while !stack.is_empty() {
         let current_cell = stack.pop().unwrap();
@@ -78,7 +79,11 @@ fn create_maze() -> mq::Image {
 
         if !offset_locs.is_empty() {
             stack.push(current_cell);
-            maze_image.set_pixel(current_cell.x as u32, current_cell.y as u32, COLOR_WHITE);
+            if first {
+                first = false;
+            } else {
+                maze_image.set_pixel(current_cell.x as u32, current_cell.y as u32, COLOR_WHITE);
+            }
 
             let offset_loc = offset_locs[rng.gen_range(0..offset_locs.len())];
             let offset = offset_loc - current_cell;
@@ -90,7 +95,9 @@ fn create_maze() -> mq::Image {
             maze_image.set_pixel(wall_pos.x as u32, wall_pos.y as u32, COLOR_WHITE);
         }
     }
-    
+    maze_image.set_pixel(MAZE_START.x as u32, MAZE_START.y as u32, COLOR_GOLD);
+    maze_image.export_png("maze.png");
+
     maze_image
 }
 
