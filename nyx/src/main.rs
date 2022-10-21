@@ -26,6 +26,10 @@ fn window_conf() -> mq::Conf {
     }
 }
 
+fn px_to_screen(x: f32, ratio: f32, offset: f32) -> f32 {
+    x * ratio + offset
+}
+
 #[macroquad::main(window_conf)]
 async fn main() {
     let mut camera =
@@ -37,6 +41,8 @@ async fn main() {
         .texture
         .set_filter(mq::FilterMode::Nearest);
 
+    let font = mq::load_ttf_font("assets/AnnieUseYourTelescope.ttf").await.unwrap();
+
     let mut lights: Vec<Light> = Vec::new();
     lights.push(Light::new(Vector2D::new(40., 40.), 4.25, LightMode::Sin(0.05, 3., 0.), mq::GRAY,));
     lights.push(Light::new(Vector2D::new(10., 10.), 1.2, LightMode::Sin(0.03, 5., 0.), mq::GRAY));
@@ -46,6 +52,7 @@ async fn main() {
 
         let draw_width = mq::screen_width().min(mq::screen_height() * 16. / 9.);
         let draw_height = mq::screen_height().min(mq::screen_width() * 9. / 16.);
+        let ratio = draw_width / PX_WIDTH as f32;
 
         let top_offset = (mq::screen_height() - draw_height) / 2.;
         let left_offset = (mq::screen_width() - draw_width) / 2.;
@@ -139,12 +146,19 @@ async fn main() {
             },
         );
 
-        mq::draw_text(
-            &(format!("FPS {:.0}", 1. / delta)),
-            20.0 + left_offset,
-            20.0 + top_offset,
-            30.0,
-            mq::WHITE,
+        let font_size = (7. * ratio) as u16;
+        let text_str = format!("FPS {:.0}", mq::get_fps());
+        let text_size = mq::measure_text(&text_str, Some(font), font_size, 1.);
+        mq::draw_text_ex(
+            &text_str,
+            px_to_screen(1., ratio, left_offset),
+            px_to_screen(1., ratio, top_offset) + text_size.offset_y,
+            mq::TextParams {
+                font,
+                color: mq::WHITE,
+                font_size,
+                ..Default::default()
+            },
         );
         mq::next_frame().await
     }
