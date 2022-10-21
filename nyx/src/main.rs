@@ -1,9 +1,9 @@
 // mod camera;
 mod light;
 mod light_modes;
-mod vector;
+mod player;
 
-use crate::{/*camera::Camera,*/ light::Light, light_modes::LightMode, vector::Vector2D};
+use crate::{/*camera::Camera,*/ light::Light, light_modes::LightMode, player::Player};
 
 use macroquad::prelude as mq;
 
@@ -20,12 +20,10 @@ const DITHER_SIZE: u32 = 4;
 // const COLOR_BLACK: mq::Color = mq::Color::new(40. / 255., 42. / 255., 54. / 255., 1.);
 // const COLOR_GREY: mq::Color = mq::Color::new(68. / 255., 71. / 255., 90. / 255., 1.);
 
-
 const COLOR_WHITE: mq::Color = mq::Color::new(1., 1., 1., 1.);
 const COLOR_GREY: mq::Color = mq::Color::new(0.1, 0.1, 0.1, 1.);
 const COLOR_BLACK: mq::Color = mq::Color::new(0., 0., 0., 1.);
 const COLOR_GOLD: mq::Color = mq::Color::new(235. / 255., 203. / 255., 139. / 255., 1.);
-
 
 fn window_conf() -> mq::Conf {
     mq::Conf {
@@ -62,15 +60,25 @@ async fn main() {
         .await
         .unwrap();
 
+    let mut player = Player::new(
+        mq::vec2(40., 40.),
+        Light::new(
+            mq::vec2(40., 40.),
+            4.25,
+            LightMode::Sin(0.05, 3., 0.),
+            COLOR_GREY,
+        ),
+    );
+
     let mut lights: Vec<Light> = Vec::new();
+    // lights.push(Light::new(
+    //     mq::vec2(40., 40.),
+    //     4.25,
+    //     LightMode::Sin(0.05, 3., 0.),
+    //     COLOR_GREY,
+    // ));
     lights.push(Light::new(
-        Vector2D::new(40., 40.),
-        4.25,
-        LightMode::Sin(0.05, 3., 0.),
-        COLOR_GREY,
-    ));
-    lights.push(Light::new(
-        Vector2D::new(10., 10.),
+        mq::vec2(10., 10.),
         1.2,
         LightMode::Sin(0.03, 5., 0.),
         COLOR_GREY,
@@ -89,20 +97,7 @@ async fn main() {
         // ------------------------------------------------------------------ //
 
         // ------------------------------------------------------------------ //
-        let mut move_vec = Vector2D::new(0., 0.);
-        if mq::is_key_down(mq::KeyCode::W) {
-            move_vec.y -= 1.;
-        }
-        if mq::is_key_down(mq::KeyCode::S) {
-            move_vec.y += 1.;
-        }
-        if mq::is_key_down(mq::KeyCode::A) {
-            move_vec.x -= 1.;
-        }
-        if mq::is_key_down(mq::KeyCode::D) {
-            move_vec.x += 1.;
-        }
-        lights[0].pt += move_vec.with_len(15. * delta);
+        player.update(delta); // moves player
         // ------------------------------------------------------------------ //
 
         // ------------------------------------------------------------------ //
@@ -115,6 +110,8 @@ async fn main() {
         for light in lights.iter() {
             mq::draw_rectangle(light.pt.x - 1., light.pt.y - 1., 2., 2., COLOR_GOLD);
         }
+
+        player.draw(COLOR_GOLD);
         // ------------------------------------------------------------------ //
 
         mq::set_camera(&mq::Camera2D::from_display_rect(mq::Rect::new(
@@ -131,7 +128,10 @@ async fn main() {
         let mut image_out =
             mq::Image::gen_image_color(PX_WIDTH as u16, PX_HEIGHT as u16, COLOR_BLACK);
 
-        let light_powers = lights
+        let mut draw_lights = lights.clone();
+        draw_lights.push(player.light);
+
+        let light_powers = draw_lights
             .iter()
             .map(|light| light.calc_power(mq::get_time() as f32))
             .collect::<Vec<f32>>();
@@ -139,7 +139,7 @@ async fn main() {
         for x in 0..PX_WIDTH {
             for y in 0..PX_HEIGHT {
                 let src_y = PX_HEIGHT - y - 1;
-                for (i, light) in lights.iter().enumerate() {
+                for (i, light) in draw_lights.iter().enumerate() {
                     let dx = light.pt.x as i32 - x as i32;
                     let dy = light.pt.y as i32 - y as i32;
                     let dist = ((dx * dx + dy * dy) as f32).sqrt();

@@ -1,3 +1,4 @@
+#[derive(Clone, Copy)]
 pub enum LightMode {
     Static,
     Sin(f32, f32, f32), // (power, variance, period, start_time)

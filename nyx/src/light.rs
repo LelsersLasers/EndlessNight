@@ -1,15 +1,15 @@
 use crate::light_modes::LightMode;
-use crate::vector::Vector2D;
 use macroquad::prelude as mq;
 
+#[derive(Clone, Copy)]
 pub struct Light {
-    pub pt: Vector2D,
+    pub pt: mq::Vec2,
     pub power: f32,
     pub light_mode: LightMode,
     pub color: mq::Color,
 }
 impl Light {
-    pub fn new(pt: Vector2D, power: f32, light_mode: LightMode, color: mq::Color) -> Light {
+    pub fn new(pt: mq::Vec2, power: f32, light_mode: LightMode, color: mq::Color) -> Light {
         Light {
             pt,
             power,
