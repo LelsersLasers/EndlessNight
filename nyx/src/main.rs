@@ -6,12 +6,15 @@ mod player;
 use crate::{/*camera::Camera,*/ light::Light, light_modes::LightMode, player::Player};
 
 use macroquad::prelude as mq;
+use rand::Rng;
 
 const PX_WIDTH: u32 = 256;
 const PX_HEIGHT: u32 = 144;
 
 const START_WIDTH: u32 = 1440;
 const START_HEIGHT: u32 = 810;
+
+const MAZE_SIZE: f32 = 101.;
 
 const DITHER: [i32; 16] = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
 const DITHER_SIZE: u32 = 4;
@@ -43,6 +46,54 @@ fn dither_idx(x: u32, y: u32) -> usize {
     ((y % DITHER_SIZE) * DITHER_SIZE + (x % DITHER_SIZE)) as usize
 }
 
+
+fn create_maze() -> mq::Image {
+
+    let neighbor_offsets = [
+        mq::Vec2::new(0., -2.),
+        mq::Vec2::new(2., 0.),
+        mq::Vec2::new(0., 2.),
+        mq::Vec2::new(-2., 0.),
+    ];
+
+    let mut stack: Vec<mq::Vec2> = vec![mq::Vec2::ONE];
+
+    let mut maze_image =
+            mq::Image::gen_image_color(MAZE_SIZE as u16, MAZE_SIZE as u16, COLOR_BLACK);
+
+    let mut rng = rand::thread_rng();
+
+    while !stack.is_empty() {
+        let current_cell = stack.pop().unwrap();
+        let offset_locs = neighbor_offsets
+            .iter()
+            .map(|offset| current_cell + *offset)
+            .filter(|new_pos| {
+                new_pos.x >= 0. && new_pos.x < MAZE_SIZE && new_pos.y >= 0. && new_pos.y < MAZE_SIZE
+            })
+            .filter(|new_pos| {
+                maze_image.get_pixel(new_pos.x as u32, new_pos.y as u32) == COLOR_BLACK
+            })
+            .collect::<Vec<mq::Vec2>>();
+
+        if !offset_locs.is_empty() {
+            stack.push(current_cell);
+            maze_image.set_pixel(current_cell.x as u32, current_cell.y as u32, COLOR_WHITE);
+
+            let offset_loc = offset_locs[rng.gen_range(0..offset_locs.len())];
+            let offset = offset_loc - current_cell;
+
+            let new_pos = current_cell + offset;
+            stack.push(new_pos);
+            let wall_pos = current_cell + offset / 2.;
+            maze_image.set_pixel(new_pos.x as u32, new_pos.y as u32, COLOR_WHITE);
+            maze_image.set_pixel(wall_pos.x as u32, wall_pos.y as u32, COLOR_WHITE);
+        }
+    }
+    
+    maze_image
+}
+
 #[macroquad::main(window_conf)]
 async fn main() {
     // ---------------------------------------------------------------------- //
@@ -56,6 +107,12 @@ async fn main() {
         .set_filter(mq::FilterMode::Nearest);
     // ---------------------------------------------------------------------- //
 
+    // ---------------------------------------------------------------------- //
+    let maze_image = create_maze();
+    let maze_texture = mq::Texture2D::from_image(&maze_image);
+    maze_texture.set_filter(mq::FilterMode::Nearest);
+    // ---------------------------------------------------------------------- //
+
     let font = mq::load_ttf_font("assets/AnnieUseYourTelescope.ttf")
         .await
         .unwrap();
@@ -64,23 +121,17 @@ async fn main() {
         mq::vec2(40., 40.),
         Light::new(
             mq::vec2(40., 40.),
-            4.25,
-            LightMode::Sin(0.05, 3., 0.),
+            4.,
+            LightMode::Sin(0.075, 3., 0.),
             COLOR_GREY,
         ),
     );
 
     let mut lights: Vec<Light> = Vec::new();
-    // lights.push(Light::new(
-    //     mq::vec2(40., 40.),
-    //     4.25,
-    //     LightMode::Sin(0.05, 3., 0.),
-    //     COLOR_GREY,
-    // ));
     lights.push(Light::new(
         mq::vec2(10., 10.),
         1.2,
-        LightMode::Sin(0.03, 5., 0.),
+        LightMode::Sin(0.05, 5., 0.),
         COLOR_GREY,
     ));
 
@@ -120,7 +171,6 @@ async fn main() {
             mq::screen_width(),
             mq::screen_height(),
         )));
-
         mq::clear_background(COLOR_GOLD);
 
         // ------------------------------------------------------------------ //
@@ -169,6 +219,17 @@ async fn main() {
 
         mq::draw_texture_ex(
             camera.render_target.unwrap().texture,
+            left_offset,
+            top_offset,
+            mq::WHITE,
+            mq::DrawTextureParams {
+                dest_size: Some(mq::vec2(draw_width, draw_height)),
+                ..Default::default()
+            },
+        );
+
+        mq::draw_texture_ex(
+            maze_texture,
             left_offset,
             top_offset,
             mq::WHITE,
