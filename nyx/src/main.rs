@@ -16,6 +16,17 @@ const START_HEIGHT: u32 = 810;
 const DITHER: [i32; 16] = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
 const DITHER_SIZE: u32 = 4;
 
+// const COLOR_WHITE: mq::Color = mq::Color::new(236. / 255., 239. / 255., 244. / 255., 1.);
+// const COLOR_BLACK: mq::Color = mq::Color::new(40. / 255., 42. / 255., 54. / 255., 1.);
+// const COLOR_GREY: mq::Color = mq::Color::new(68. / 255., 71. / 255., 90. / 255., 1.);
+
+
+const COLOR_WHITE: mq::Color = mq::Color::new(1., 1., 1., 1.);
+const COLOR_GREY: mq::Color = mq::Color::new(0.1, 0.1, 0.1, 1.);
+const COLOR_BLACK: mq::Color = mq::Color::new(0., 0., 0., 1.);
+const COLOR_GOLD: mq::Color = mq::Color::new(235. / 255., 203. / 255., 139. / 255., 1.);
+
+
 fn window_conf() -> mq::Conf {
     mq::Conf {
         window_title: "Nyx".to_owned(),
@@ -56,13 +67,13 @@ async fn main() {
         Vector2D::new(40., 40.),
         4.25,
         LightMode::Sin(0.05, 3., 0.),
-        mq::GRAY,
+        COLOR_GREY,
     ));
     lights.push(Light::new(
         Vector2D::new(10., 10.),
         1.2,
         LightMode::Sin(0.03, 5., 0.),
-        mq::GRAY,
+        COLOR_GREY,
     ));
 
     loop {
@@ -96,13 +107,13 @@ async fn main() {
 
         // ------------------------------------------------------------------ //
         mq::set_camera(&camera);
-        mq::clear_background(mq::BLACK);
+        mq::clear_background(COLOR_BLACK);
 
-        mq::draw_line(0., 0., 30., 25., 20.0, mq::BLUE);
-        mq::draw_rectangle(100., 60., 15., 20., mq::GREEN);
+        mq::draw_line(0., 0., 30., 25., 20.0, COLOR_WHITE);
+        mq::draw_rectangle(100., 60., 15., 20., COLOR_WHITE);
 
         for light in lights.iter() {
-            mq::draw_rectangle(light.pt.x - 1., light.pt.y - 1., 2., 2., mq::YELLOW);
+            mq::draw_rectangle(light.pt.x - 1., light.pt.y - 1., 2., 2., COLOR_GOLD);
         }
         // ------------------------------------------------------------------ //
 
@@ -113,12 +124,12 @@ async fn main() {
             mq::screen_height(),
         )));
 
-        mq::clear_background(mq::WHITE);
+        mq::clear_background(COLOR_GOLD);
 
         // ------------------------------------------------------------------ //
         let image_in = camera.render_target.unwrap().texture.get_texture_data();
         let mut image_out =
-            mq::Image::gen_image_color(PX_WIDTH as u16, PX_HEIGHT as u16, mq::BLACK);
+            mq::Image::gen_image_color(PX_WIDTH as u16, PX_HEIGHT as u16, COLOR_BLACK);
 
         let light_powers = lights
             .iter()
@@ -140,7 +151,7 @@ async fn main() {
                         image_out.set_pixel(
                             x,
                             y,
-                            if screen_px_color == mq::BLACK {
+                            if screen_px_color == COLOR_BLACK {
                                 light.color
                             } else {
                                 screen_px_color
@@ -170,14 +181,14 @@ async fn main() {
         // ------------------------------------------------------------------ //
         let font_size = (7. * ratio) as u16;
         let text_str = format!("FPS {:.0}", mq::get_fps());
-        let text_size = mq::measure_text(&text_str, Some(font), font_size, 1.);
+        // let text_size = mq::measure_text(&text_str, Some(font), font_size, 1.);
         mq::draw_text_ex(
             &text_str,
             px_to_screen(1., ratio, left_offset),
-            px_to_screen(1., ratio, top_offset) + text_size.offset_y,
+            px_to_screen(PX_HEIGHT as f32 - 1., ratio, top_offset),
             mq::TextParams {
                 font,
-                color: mq::WHITE,
+                color: COLOR_WHITE,
                 font_size,
                 ..Default::default()
             },
