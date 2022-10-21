@@ -1,9 +1,9 @@
-mod camera;
+// mod camera;
 mod light;
-mod vector;
 mod light_modes;
+mod vector;
 
-use crate::{/*camera::Camera,*/ light::Light, vector::Vector2D, light_modes::LightMode};
+use crate::{/*camera::Camera,*/ light::Light, light_modes::LightMode, vector::Vector2D};
 
 use macroquad::prelude as mq;
 
@@ -30,8 +30,13 @@ fn px_to_screen(x: f32, ratio: f32, offset: f32) -> f32 {
     x * ratio + offset
 }
 
+fn dither_idx(x: u32, y: u32) -> usize {
+    ((y % DITHER_SIZE) * DITHER_SIZE + (x % DITHER_SIZE)) as usize
+}
+
 #[macroquad::main(window_conf)]
 async fn main() {
+    // ---------------------------------------------------------------------- //
     let mut camera =
         mq::Camera2D::from_display_rect(mq::Rect::new(0.0, 0.0, PX_WIDTH as f32, PX_HEIGHT as f32));
     camera.render_target = Some(mq::render_target(PX_WIDTH as u32, PX_HEIGHT as u32));
@@ -40,22 +45,37 @@ async fn main() {
         .unwrap()
         .texture
         .set_filter(mq::FilterMode::Nearest);
+    // ---------------------------------------------------------------------- //
 
-    let font = mq::load_ttf_font("assets/AnnieUseYourTelescope.ttf").await.unwrap();
+    let font = mq::load_ttf_font("assets/AnnieUseYourTelescope.ttf")
+        .await
+        .unwrap();
 
     let mut lights: Vec<Light> = Vec::new();
-    lights.push(Light::new(Vector2D::new(40., 40.), 4.25, LightMode::Sin(0.05, 3., 0.), mq::GRAY,));
-    lights.push(Light::new(Vector2D::new(10., 10.), 1.2, LightMode::Sin(0.03, 5., 0.), mq::GRAY));
+    lights.push(Light::new(
+        Vector2D::new(40., 40.),
+        4.25,
+        LightMode::Sin(0.05, 3., 0.),
+        mq::GRAY,
+    ));
+    lights.push(Light::new(
+        Vector2D::new(10., 10.),
+        1.2,
+        LightMode::Sin(0.03, 5., 0.),
+        mq::GRAY,
+    ));
 
     loop {
         let delta = mq::get_frame_time();
 
+        // ------------------------------------------------------------------ //
         let draw_width = mq::screen_width().min(mq::screen_height() * 16. / 9.);
         let draw_height = mq::screen_height().min(mq::screen_width() * 9. / 16.);
         let ratio = draw_width / PX_WIDTH as f32;
 
         let top_offset = (mq::screen_height() - draw_height) / 2.;
         let left_offset = (mq::screen_width() - draw_width) / 2.;
+        // ------------------------------------------------------------------ //
 
         // ------------------------------------------------------------------ //
         let mut move_vec = Vector2D::new(0., 0.);
@@ -74,8 +94,8 @@ async fn main() {
         lights[0].pt += move_vec.with_len(15. * delta);
         // ------------------------------------------------------------------ //
 
+        // ------------------------------------------------------------------ //
         mq::set_camera(&camera);
-
         mq::clear_background(mq::BLACK);
 
         mq::draw_line(0., 0., 30., 25., 20.0, mq::BLUE);
@@ -84,6 +104,7 @@ async fn main() {
         for light in lights.iter() {
             mq::draw_rectangle(light.pt.x - 1., light.pt.y - 1., 2., 2., mq::YELLOW);
         }
+        // ------------------------------------------------------------------ //
 
         mq::set_camera(&mq::Camera2D::from_display_rect(mq::Rect::new(
             0.,
@@ -94,11 +115,15 @@ async fn main() {
 
         mq::clear_background(mq::WHITE);
 
+        // ------------------------------------------------------------------ //
         let image_in = camera.render_target.unwrap().texture.get_texture_data();
         let mut image_out =
             mq::Image::gen_image_color(PX_WIDTH as u16, PX_HEIGHT as u16, mq::BLACK);
 
-        let light_powers = lights.iter().map(|light| light.get_power(mq::get_time() as f32)).collect::<Vec<f32>>();
+        let light_powers = lights
+            .iter()
+            .map(|light| light.calc_power(mq::get_time() as f32))
+            .collect::<Vec<f32>>();
 
         for x in 0..PX_WIDTH {
             for y in 0..PX_HEIGHT {
@@ -108,13 +133,8 @@ async fn main() {
                     let dy = light.pt.y as i32 - y as i32;
                     let dist = ((dx * dx + dy * dy) as f32).sqrt();
 
-                    // get_power(mq::get_time() as f32)
-
                     if dist < light_powers[i] * 4.
-                        || dist / light_powers[i]
-                            <= DITHER[(((dy.unsigned_abs() % DITHER_SIZE) * DITHER_SIZE)
-                                + (dx.unsigned_abs() % DITHER_SIZE))
-                                as usize] as f32
+                        || dist / light_powers[i] <= DITHER[dither_idx(x, y)] as f32
                     {
                         let screen_px_color = image_in.get_pixel(x, src_y);
                         image_out.set_pixel(
@@ -134,6 +154,7 @@ async fn main() {
         }
         // overwrite the texture with the new image
         camera.render_target.unwrap().texture.update(&image_out);
+        // ------------------------------------------------------------------ //
 
         mq::draw_texture_ex(
             camera.render_target.unwrap().texture,
@@ -146,6 +167,7 @@ async fn main() {
             },
         );
 
+        // ------------------------------------------------------------------ //
         let font_size = (7. * ratio) as u16;
         let text_str = format!("FPS {:.0}", mq::get_fps());
         let text_size = mq::measure_text(&text_str, Some(font), font_size, 1.);
@@ -160,6 +182,8 @@ async fn main() {
                 ..Default::default()
             },
         );
+        // ------------------------------------------------------------------ //
+
         mq::next_frame().await
     }
 }

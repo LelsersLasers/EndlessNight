@@ -1,5 +1,5 @@
-use crate::vector::Vector2D;
 use crate::light_modes::LightMode;
+use crate::vector::Vector2D;
 use macroquad::prelude as mq;
 
 pub struct Light {
@@ -17,7 +17,7 @@ impl Light {
             color,
         }
     }
-    pub fn get_power(&self, time: f32) -> f32 {
-        self.power + self.light_mode.get_power_offset(time)
+    pub fn calc_power(&self, time: f32) -> f32 {
+        self.power + self.light_mode.calc_power_offset(time)
     }
 }
