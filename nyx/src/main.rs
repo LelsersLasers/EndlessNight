@@ -1,9 +1,11 @@
-// mod camera;
+mod camera_manager;
 mod light;
 mod light_modes;
 mod player;
 
-use crate::{/*camera::Camera,*/ light::Light, light_modes::LightMode, player::Player};
+use crate::{
+    camera_manager::CameraManager, light::Light, light_modes::LightMode, player::Player,
+};
 
 use macroquad::prelude as mq;
 use rand::Rng;
@@ -15,7 +17,10 @@ const START_WIDTH: u32 = 1440;
 const START_HEIGHT: u32 = 810;
 
 const MAZE_SIZE: f32 = 101.;
-const MAZE_START: mq::Vec2 = mq::vec2(((MAZE_SIZE / 2.) as u32) as f32, ((MAZE_SIZE / 2.) as u32) as f32);
+const MAZE_START: mq::Vec2 = mq::vec2(
+    ((MAZE_SIZE / 2.) as u32) as f32,
+    ((MAZE_SIZE / 2.) as u32) as f32,
+);
 
 const DITHER: [i32; 16] = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
 const DITHER_SIZE: u32 = 4;
@@ -47,9 +52,7 @@ fn dither_idx(x: u32, y: u32) -> usize {
     ((y % DITHER_SIZE) * DITHER_SIZE + (x % DITHER_SIZE)) as usize
 }
 
-
 fn create_maze() -> mq::Image {
-
     let neighbor_offsets = [
         mq::Vec2::new(0., -2.),
         mq::Vec2::new(2., 0.),
@@ -59,7 +62,7 @@ fn create_maze() -> mq::Image {
     let mut stack: Vec<mq::Vec2> = vec![MAZE_START];
 
     let mut maze_image =
-            mq::Image::gen_image_color(MAZE_SIZE as u16, MAZE_SIZE as u16, COLOR_BLACK);
+        mq::Image::gen_image_color(MAZE_SIZE as u16, MAZE_SIZE as u16, COLOR_BLACK);
 
     let mut rng = rand::thread_rng();
     let mut first = true;
@@ -112,6 +115,8 @@ async fn main() {
         .unwrap()
         .texture
         .set_filter(mq::FilterMode::Nearest);
+
+    let mut cm = CameraManager::new(mq::Vec2::ZERO);
     // ---------------------------------------------------------------------- //
 
     // ---------------------------------------------------------------------- //
@@ -125,14 +130,15 @@ async fn main() {
         .unwrap();
 
     let mut player = Player::new(
-        mq::vec2(40., 40.),
+        mq::vec2(PX_WIDTH as f32 / 2., PX_HEIGHT as f32 / 2.),
         Light::new(
-            mq::vec2(40., 40.),
+            mq::Vec2::ZERO,
             4.,
             LightMode::Sin(0.075, 3., 0.),
             COLOR_GREY,
         ),
     );
+    player.update_light_pt();
 
     let mut lights: Vec<Light> = Vec::new();
     lights.push(Light::new(
@@ -155,7 +161,8 @@ async fn main() {
         // ------------------------------------------------------------------ //
 
         // ------------------------------------------------------------------ //
-        player.update(delta); // moves player
+        player.update(&mut cm, delta); // moves player
+
         // ------------------------------------------------------------------ //
 
         // ------------------------------------------------------------------ //
@@ -235,16 +242,16 @@ async fn main() {
             },
         );
 
-        mq::draw_texture_ex(
-            maze_texture,
-            left_offset,
-            top_offset,
-            mq::WHITE,
-            mq::DrawTextureParams {
-                dest_size: Some(mq::vec2(draw_width, draw_height)),
-                ..Default::default()
-            },
-        );
+        // mq::draw_texture_ex(
+        //     maze_texture,
+        //     left_offset,
+        //     top_offset,
+        //     mq::WHITE,
+        //     mq::DrawTextureParams {
+        //         dest_size: Some(mq::vec2(draw_width, draw_height)),
+        //         ..Default::default()
+        //     },
+        // );
 
         // ------------------------------------------------------------------ //
         let font_size = (7. * ratio) as u16;
