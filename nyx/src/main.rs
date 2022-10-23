@@ -22,6 +22,8 @@ const MAZE_START: mq::Vec2 = mq::vec2(
     ((MAZE_SIZE / 2.) as u32) as f32,
 );
 
+const PLAYER_START: mq::Vec2 = mq::vec2(PX_WIDTH as f32 / 2., PX_HEIGHT as f32 / 2.);
+
 const DITHER: [i32; 16] = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
 const DITHER_SIZE: u32 = 4;
 
@@ -116,7 +118,7 @@ async fn main() {
         .texture
         .set_filter(mq::FilterMode::Nearest);
 
-    let mut cm = CameraManager::new(mq::Vec2::ZERO);
+    let mut cm = CameraManager::new(mq::Vec2::ZERO, -PLAYER_START);
     // ---------------------------------------------------------------------- //
 
     // ---------------------------------------------------------------------- //
@@ -130,23 +132,27 @@ async fn main() {
         .unwrap();
 
     let mut player = Player::new(
-        mq::vec2(PX_WIDTH as f32 / 2., PX_HEIGHT as f32 / 2.),
+        PLAYER_START,
         Light::new(
             mq::Vec2::ZERO,
-            4.,
-            LightMode::Sin(0.075, 3., 0.),
+            3.5,
+            LightMode::Sin(0.15, 3., 0.),
             COLOR_GREY,
         ),
     );
     player.update_light_pt();
 
-    let mut lights: Vec<Light> = Vec::new();
-    lights.push(Light::new(
+    let mut lights: Vec<Light> = vec![Light::new(
         mq::vec2(10., 10.),
         1.2,
         LightMode::Sin(0.05, 5., 0.),
         COLOR_GREY,
-    ));
+    )];
+
+    let mut objects: Vec<mq::Rect> = vec![
+        mq::Rect::new(0., 0., 20., 30.),
+        mq::Rect::new(100., 60., 15., 20.),
+    ];
 
     loop {
         let delta = mq::get_frame_time();
@@ -169,14 +175,25 @@ async fn main() {
         mq::set_camera(&camera);
         mq::clear_background(COLOR_BLACK);
 
-        mq::draw_line(0., 0., 30., 25., 20.0, COLOR_WHITE);
-        mq::draw_rectangle(100., 60., 15., 20., COLOR_WHITE);
-
-        for light in lights.iter() {
-            mq::draw_rectangle(light.pt.x - 1., light.pt.y - 1., 2., 2., COLOR_GOLD);
+        // mq::draw_line(0., 0., 30., 25., 20.0, COLOR_WHITE);
+        // mq::draw_rectangle(100., 60., 15., 20., COLOR_WHITE);
+        for object in objects.iter() {
+            let obj_pt = cm.calc_offset(mq::vec2(object.x, object.y));
+            mq::draw_rectangle(
+                obj_pt.x,
+                obj_pt.y,
+                object.w,
+                object.h,
+                COLOR_WHITE,
+            );
         }
 
-        player.draw(COLOR_GOLD);
+        for light in lights.iter() {
+            let light_pt = cm.calc_offset(light.pt);
+            mq::draw_rectangle(light_pt.x - 1., light_pt.y - 1., 2., 2., COLOR_GOLD);
+        }
+
+        player.draw(COLOR_GOLD, &cm);
         // ------------------------------------------------------------------ //
 
         mq::set_camera(&mq::Camera2D::from_display_rect(mq::Rect::new(
@@ -199,13 +216,17 @@ async fn main() {
             .iter()
             .map(|light| light.calc_power(mq::get_time() as f32))
             .collect::<Vec<f32>>();
+        let light_pts = draw_lights
+            .iter()
+            .map(|light| cm.calc_offset(light.pt))
+            .collect::<Vec<mq::Vec2>>();
 
         for x in 0..PX_WIDTH {
             for y in 0..PX_HEIGHT {
                 let src_y = PX_HEIGHT - y - 1;
                 for (i, light) in draw_lights.iter().enumerate() {
-                    let dx = light.pt.x as i32 - x as i32;
-                    let dy = light.pt.y as i32 - y as i32;
+                    let dx = light_pts[i].x as i32 - x as i32;
+                    let dy = light_pts[i].y as i32 - y as i32;
                     let dist = ((dx * dx + dy * dy) as f32).sqrt();
 
                     if dist < light_powers[i] * 4.
