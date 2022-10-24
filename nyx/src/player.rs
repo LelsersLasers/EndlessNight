@@ -5,18 +5,20 @@ use macroquad::prelude as mq;
 
 pub struct Player {
     pub pt: mq::Vec2,
+    pub w: f32,
+    pub h: f32,
     pub light: Light,
 }
 impl Player {
-    pub fn new(pt: mq::Vec2, light: Light) -> Player {
-        Player { pt, light }
+    pub fn new(pt: mq::Vec2, w: f32, h: f32, light: Light) -> Player {
+        Player { pt, w, h, light }
     }
     pub fn update_light_pt(&mut self) {
-        self.light.pt = self.pt;
+        self.light.pt = self.pt + mq::vec2(self.w, self.h) / 2.;
     }
     pub fn draw(&self, color: mq::Color, cm: &CameraManager) {
         let pt = cm.calc_offset(self.pt);
-        mq::draw_rectangle(pt.x - 4., pt.y - 5., 8., 10., color)
+        mq::draw_rectangle(pt.x, pt.y, self.w, self.h, color)
     }
     pub fn update(&mut self, cm: &mut CameraManager, delta: f32) {
         let mut move_vec = mq::Vec2::ZERO;
@@ -32,7 +34,7 @@ impl Player {
         if mq::is_key_down(mq::KeyCode::D) || mq::is_key_down(mq::KeyCode::Right) {
             move_vec.x += 1.;
         }
-        move_vec = move_vec.normalize_or_zero() * 15. * delta;
+        move_vec = move_vec.normalize_or_zero() * 20. * delta;
         self.pt += move_vec;
         self.update_light_pt();
 
