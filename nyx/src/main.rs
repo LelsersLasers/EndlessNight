@@ -64,7 +64,7 @@ fn create_maze() -> mq::Image {
     let mut stack: Vec<mq::Vec2> = vec![MAZE_START];
 
     let mut maze_image =
-        mq::Image::gen_image_color(MAZE_SIZE as u16, MAZE_SIZE as u16, COLOR_BLACK);
+        mq::Image::gen_image_color(MAZE_SIZE as u16, MAZE_SIZE as u16, COLOR_WHITE);
 
     let mut rng = rand::thread_rng();
     let mut first = true;
@@ -75,10 +75,10 @@ fn create_maze() -> mq::Image {
             .iter()
             .map(|offset| current_cell + *offset)
             .filter(|new_pos| {
-                new_pos.x >= 0. && new_pos.x < MAZE_SIZE && new_pos.y >= 0. && new_pos.y < MAZE_SIZE
+                new_pos.x >= 1. && new_pos.x < MAZE_SIZE - 1. && new_pos.y >= 1. && new_pos.y < MAZE_SIZE - 1.
             })
             .filter(|new_pos| {
-                maze_image.get_pixel(new_pos.x as u32, new_pos.y as u32) == COLOR_BLACK
+                maze_image.get_pixel(new_pos.x as u32, new_pos.y as u32) == COLOR_WHITE
             })
             .collect::<Vec<mq::Vec2>>();
 
@@ -87,7 +87,7 @@ fn create_maze() -> mq::Image {
             if first {
                 first = false;
             } else {
-                maze_image.set_pixel(current_cell.x as u32, current_cell.y as u32, COLOR_WHITE);
+                maze_image.set_pixel(current_cell.x as u32, current_cell.y as u32, COLOR_BLACK);
             }
 
             let offset_loc = offset_locs[rng.gen_range(0..offset_locs.len())];
@@ -96,11 +96,11 @@ fn create_maze() -> mq::Image {
             let new_pos = current_cell + offset;
             stack.push(new_pos);
             let wall_pos = current_cell + offset / 2.;
-            maze_image.set_pixel(new_pos.x as u32, new_pos.y as u32, COLOR_WHITE);
-            maze_image.set_pixel(wall_pos.x as u32, wall_pos.y as u32, COLOR_WHITE);
+            maze_image.set_pixel(new_pos.x as u32, new_pos.y as u32, COLOR_BLACK);
+            maze_image.set_pixel(wall_pos.x as u32, wall_pos.y as u32, COLOR_BLACK);
         }
     }
-    maze_image.set_pixel(MAZE_START.x as u32, MAZE_START.y as u32, COLOR_GOLD);
+    // maze_image.set_pixel(MAZE_START.x as u32, MAZE_START.y as u32, mq::BLUE);
     maze_image.export_png("maze.png");
 
     maze_image
