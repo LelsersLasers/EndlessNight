@@ -9,7 +9,6 @@ use crate::{
 
 use macroquad::prelude as mq;
 
-use rand::Rng;
 
 const PX_WIDTH: u32 = 256;
 const PX_HEIGHT: u32 = 144;
@@ -27,7 +26,7 @@ const MAZE_TILE_SIZE: f32 = 50.;
 
 const PLAYER_W: f32 = 8.;
 const PLAYER_H: f32 = 10.;
-const PLAYER_START: mq::Vec2 = mq::vec2((PX_WIDTH as f32 + PLAYER_W) / 2., (PX_HEIGHT as f32 + PLAYER_H) / 2.);
+const PLAYER_START: mq::Vec2 = mq::vec2((PX_WIDTH as f32 - PLAYER_W) / 2., (PX_HEIGHT as f32 - PLAYER_H) / 2.);
 
 
 const MAZE_PT: mq::Vec2 = mq::vec2(-MAZE_SIZE * MAZE_TILE_SIZE / 2. + PLAYER_START.x, -MAZE_SIZE * MAZE_TILE_SIZE / 2. + PLAYER_START.y);
@@ -76,7 +75,6 @@ fn create_maze() -> mq::Image {
     let mut maze_image =
         mq::Image::gen_image_color(MAZE_SIZE as u16, MAZE_SIZE as u16, COLOR_WHITE);
 
-    let mut rng = rand::thread_rng();
     let mut first = true;
 
     while !stack.is_empty() {
@@ -100,7 +98,7 @@ fn create_maze() -> mq::Image {
                 maze_image.set_pixel(current_cell.x as u32, current_cell.y as u32, COLOR_BLACK);
             }
 
-            let offset_loc = offset_locs[rng.gen_range(0..offset_locs.len())];
+            let offset_loc = offset_locs[mq::rand::gen_range(0, offset_locs.len())];
             let offset = offset_loc - current_cell;
 
             let new_pos = current_cell + offset;
@@ -119,6 +117,9 @@ fn create_maze() -> mq::Image {
 #[macroquad::main(window_conf)]
 async fn main() {
     // ---------------------------------------------------------------------- //
+
+    mq::rand::srand(instant::now() as u64);
+
     let mut camera =
         mq::Camera2D::from_display_rect(mq::Rect::new(0.0, 0.0, PX_WIDTH as f32, PX_HEIGHT as f32));
     camera.render_target = Some(mq::render_target(PX_WIDTH as u32, PX_HEIGHT as u32));
@@ -148,7 +149,7 @@ async fn main() {
         Light::new(
             mq::Vec2::ZERO,
             3.6,
-            LightMode::Sin(0.15, 3., 0.),
+            LightMode::Sin(0.15, 4., 0.),
             COLOR_GREY,
         ),
     );
