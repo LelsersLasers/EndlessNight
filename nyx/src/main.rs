@@ -21,8 +21,17 @@ const MAZE_START: mq::Vec2 = mq::vec2(
     ((MAZE_SIZE / 2.) as u32) as f32,
     ((MAZE_SIZE / 2.) as u32) as f32,
 );
+const MAZE_TILE_SIZE: f32 = 50.;
 
-const PLAYER_START: mq::Vec2 = mq::vec2(PX_WIDTH as f32 / 2., PX_HEIGHT as f32 / 2.);
+
+const PLAYER_W: f32 = 8.;
+const PLAYER_H: f32 = 10.;
+const PLAYER_START: mq::Vec2 = mq::vec2((PX_WIDTH as f32 + PLAYER_W) / 2., (PX_HEIGHT as f32 + PLAYER_H) / 2.);
+
+
+const MAZE_PT: mq::Vec2 = mq::vec2(-MAZE_SIZE * MAZE_TILE_SIZE / 2. + PLAYER_START.x, -MAZE_SIZE * MAZE_TILE_SIZE / 2. + PLAYER_START.y);
+
+
 
 const DITHER: [i32; 16] = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
 const DITHER_SIZE: u32 = 4;
@@ -118,6 +127,10 @@ async fn main() {
         .texture
         .set_filter(mq::FilterMode::Nearest);
 
+    let font = mq::load_ttf_font("assets/AnnieUseYourTelescope.ttf")
+        .await
+        .unwrap();
+
     let mut cm = CameraManager::new(mq::Vec2::ZERO, -PLAYER_START);
     // ---------------------------------------------------------------------- //
 
@@ -127,12 +140,10 @@ async fn main() {
     maze_texture.set_filter(mq::FilterMode::Nearest);
     // ---------------------------------------------------------------------- //
 
-    let font = mq::load_ttf_font("assets/AnnieUseYourTelescope.ttf")
-        .await
-        .unwrap();
-
     let mut player = Player::new(
-        PLAYER_START,
+        PLAYER_START - mq::vec2(PLAYER_W, PLAYER_H) / 2.,
+        PLAYER_W,
+        PLAYER_H,
         Light::new(
             mq::Vec2::ZERO,
             3.5,
@@ -142,17 +153,17 @@ async fn main() {
     );
     player.update_light_pt();
 
-    let mut lights: Vec<Light> = vec![Light::new(
-        mq::vec2(10., 10.),
+    let /*mut*/ lights: Vec<Light> = vec![Light::new(
+        PLAYER_START,
         1.2,
         LightMode::Sin(0.05, 5., 0.),
         COLOR_GREY,
     )];
 
-    let mut objects: Vec<mq::Rect> = vec![
-        mq::Rect::new(0., 0., 20., 30.),
-        mq::Rect::new(100., 60., 15., 20.),
-    ];
+    // let mut objects: Vec<mq::Rect> = vec![
+    //     mq::Rect::new(0., 0., 20., 30.),
+    //     mq::Rect::new(100., 60., 15., 20.),
+    // ];
 
     loop {
         let delta = mq::get_frame_time();
@@ -177,16 +188,30 @@ async fn main() {
 
         // mq::draw_line(0., 0., 30., 25., 20.0, COLOR_WHITE);
         // mq::draw_rectangle(100., 60., 15., 20., COLOR_WHITE);
-        for object in objects.iter() {
-            let obj_pt = cm.calc_offset(mq::vec2(object.x, object.y));
-            mq::draw_rectangle(
-                obj_pt.x,
-                obj_pt.y,
-                object.w,
-                object.h,
-                COLOR_WHITE,
-            );
-        }
+
+        let maze_pt = cm.calc_offset(MAZE_PT);
+        mq::draw_texture_ex(
+            maze_texture,
+            maze_pt.x,
+            maze_pt.y,
+            mq::WHITE,
+            mq::DrawTextureParams {
+                dest_size: Some(mq::Vec2::splat(MAZE_SIZE * MAZE_TILE_SIZE)),
+                flip_y: true,
+                ..Default::default()
+            },
+        );
+
+        // for object in objects.iter() {
+        //     let obj_pt = cm.calc_offset(mq::vec2(object.x, object.y));
+        //     mq::draw_rectangle(
+        //         obj_pt.x,
+        //         obj_pt.y,
+        //         object.w,
+        //         object.h,
+        //         COLOR_WHITE,
+        //     );
+        // }
 
         for light in lights.iter() {
             let light_pt = cm.calc_offset(light.pt);
@@ -262,17 +287,6 @@ async fn main() {
                 ..Default::default()
             },
         );
-
-        // mq::draw_texture_ex(
-        //     maze_texture,
-        //     left_offset,
-        //     top_offset,
-        //     mq::WHITE,
-        //     mq::DrawTextureParams {
-        //         dest_size: Some(mq::vec2(draw_width, draw_height)),
-        //         ..Default::default()
-        //     },
-        // );
 
         // ------------------------------------------------------------------ //
         let font_size = (7. * ratio) as u16;
