@@ -8,6 +8,7 @@ use crate::{
 };
 
 use macroquad::prelude as mq;
+
 use rand::Rng;
 
 const PX_WIDTH: u32 = 256;
@@ -110,7 +111,7 @@ fn create_maze() -> mq::Image {
         }
     }
     // maze_image.set_pixel(MAZE_START.x as u32, MAZE_START.y as u32, mq::BLUE);
-    maze_image.export_png("maze.png");
+    // maze_image.export_png("maze.png");
 
     maze_image
 }
@@ -146,7 +147,7 @@ async fn main() {
         PLAYER_H,
         Light::new(
             mq::Vec2::ZERO,
-            3.5,
+            3.6,
             LightMode::Sin(0.15, 3., 0.),
             COLOR_GREY,
         ),
