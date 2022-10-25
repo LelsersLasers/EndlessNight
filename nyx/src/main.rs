@@ -144,9 +144,6 @@ async fn main() {
         mq::set_camera(&camera);
         mq::clear_background(COLOR_BLACK);
 
-        // mq::draw_line(0., 0., 30., 25., 20.0, COLOR_WHITE);
-        // mq::draw_rectangle(100., 60., 15., 20., COLOR_WHITE);
-
         let maze_pt = cm.calc_offset(MAZE_PT);
         mq::draw_texture_ex(
             maze_texture,
@@ -215,7 +212,7 @@ async fn main() {
                     if dist < light_powers[i] * 4.
                         || dist / light_powers[i] <= DITHER[dither_idx(x, y)] as f32
                     {
-                    // if true {
+                        // if true {
                         let screen_px_color = image_in.get_pixel(x, src_y);
                         image_out.set_pixel(
                             x,
