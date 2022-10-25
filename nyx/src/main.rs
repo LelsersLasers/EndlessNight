@@ -1,6 +1,7 @@
 mod camera_manager;
 mod light;
 mod light_modes;
+mod maze;
 mod player;
 
 use crate::{
@@ -63,57 +64,6 @@ fn dither_idx(x: u32, y: u32) -> usize {
     ((y % DITHER_SIZE) * DITHER_SIZE + (x % DITHER_SIZE)) as usize
 }
 
-fn create_maze() -> mq::Image {
-    let neighbor_offsets = [
-        mq::Vec2::new(0., -2.),
-        mq::Vec2::new(2., 0.),
-        mq::Vec2::new(0., 2.),
-        mq::Vec2::new(-2., 0.),
-    ];
-    let mut stack: Vec<mq::Vec2> = vec![MAZE_START];
-
-    let mut maze_image =
-        mq::Image::gen_image_color(MAZE_SIZE as u16, MAZE_SIZE as u16, COLOR_WHITE);
-
-    let mut first = true;
-
-    while !stack.is_empty() {
-        let current_cell = stack.pop().unwrap();
-        let offset_locs = neighbor_offsets
-            .iter()
-            .map(|offset| current_cell + *offset)
-            .filter(|new_pos| {
-                new_pos.x >= 1. && new_pos.x < MAZE_SIZE - 1. && new_pos.y >= 1. && new_pos.y < MAZE_SIZE - 1.
-            })
-            .filter(|new_pos| {
-                maze_image.get_pixel(new_pos.x as u32, new_pos.y as u32) == COLOR_WHITE
-            })
-            .collect::<Vec<mq::Vec2>>();
-
-        if !offset_locs.is_empty() {
-            stack.push(current_cell);
-            if first {
-                first = false;
-            } else {
-                maze_image.set_pixel(current_cell.x as u32, current_cell.y as u32, COLOR_BLACK);
-            }
-
-            let offset_loc = offset_locs[mq::rand::gen_range(0, offset_locs.len())];
-            let offset = offset_loc - current_cell;
-
-            let new_pos = current_cell + offset;
-            stack.push(new_pos);
-            let wall_pos = current_cell + offset / 2.;
-            maze_image.set_pixel(new_pos.x as u32, new_pos.y as u32, COLOR_BLACK);
-            maze_image.set_pixel(wall_pos.x as u32, wall_pos.y as u32, COLOR_BLACK);
-        }
-    }
-    // maze_image.set_pixel(MAZE_START.x as u32, MAZE_START.y as u32, mq::BLUE);
-    // maze_image.export_png("maze.png");
-
-    maze_image
-}
-
 #[macroquad::main(window_conf)]
 async fn main() {
     // ---------------------------------------------------------------------- //
@@ -137,7 +87,13 @@ async fn main() {
     // ---------------------------------------------------------------------- //
 
     // ---------------------------------------------------------------------- //
-    let maze_image = create_maze();
+    let maze_image = maze::create_maze_texture(
+        MAZE_SIZE,
+        MAZE_TILE_SIZE,
+        MAZE_START,
+        COLOR_WHITE,
+        COLOR_BLACK,
+    );
     let maze_texture = mq::Texture2D::from_image(&maze_image);
     maze_texture.set_filter(mq::FilterMode::Nearest);
     // ---------------------------------------------------------------------- //
