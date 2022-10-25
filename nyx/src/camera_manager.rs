@@ -6,7 +6,10 @@ pub struct CameraManager {
 }
 impl CameraManager {
     pub fn new(pt: mq::Vec2, target: mq::Vec2) -> Self {
-        CameraManager { pt, target_offset: target - pt }
+        CameraManager {
+            pt,
+            target_offset: target - pt,
+        }
     }
     pub fn calc_offset(&self, pt: mq::Vec2) -> mq::Vec2 {
         pt - self.pt

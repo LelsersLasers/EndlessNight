@@ -77,13 +77,18 @@ pub fn create_maze_texture(
             if maze_map.get_pixel(x, y) == color_black {
                 for tile_x in 0..maze_tile_size as u32 {
                     for tile_y in 0..maze_tile_size as u32 {
-                        if mq::rand::gen_range(0, 50) != 0 {
-                            maze_texture.set_pixel(
-                                x * maze_tile_size as u32 + tile_x,
-                                y * maze_tile_size as u32 + tile_y,
-                                color_black,
-                            );
-                        }
+                        // if mq::rand::gen_range(0, 100) != 0 {
+                        //     maze_texture.set_pixel(
+                        //         x * maze_tile_size as u32 + tile_x,
+                        //         y * maze_tile_size as u32 + tile_y,
+                        //         color_black,
+                        //     );
+                        // }
+                        maze_texture.set_pixel(
+                            x * maze_tile_size as u32 + tile_x,
+                            y * maze_tile_size as u32 + tile_y,
+                            color_black,
+                        );
                     }
                 }
             }

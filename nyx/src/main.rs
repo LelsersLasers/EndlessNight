@@ -3,13 +3,11 @@ mod light;
 mod light_modes;
 mod maze;
 mod player;
+mod toggle;
 
-use crate::{
-    camera_manager::CameraManager, light::Light, light_modes::LightMode, player::Player,
-};
+use crate::{camera_manager::CameraManager, light::Light, light_modes::LightMode, player::Player};
 
 use macroquad::prelude as mq;
-
 
 const PX_WIDTH: u32 = 256;
 const PX_HEIGHT: u32 = 144;
@@ -24,15 +22,17 @@ const MAZE_START: mq::Vec2 = mq::vec2(
 );
 const MAZE_TILE_SIZE: f32 = 50.;
 
-
 const PLAYER_W: f32 = 8.;
 const PLAYER_H: f32 = 10.;
-const PLAYER_START: mq::Vec2 = mq::vec2((PX_WIDTH as f32 - PLAYER_W) / 2., (PX_HEIGHT as f32 - PLAYER_H) / 2.);
+const PLAYER_START: mq::Vec2 = mq::vec2(
+    (PX_WIDTH as f32 - PLAYER_W) / 2.,
+    (PX_HEIGHT as f32 - PLAYER_H) / 2.,
+);
 
-
-const MAZE_PT: mq::Vec2 = mq::vec2(-MAZE_SIZE * MAZE_TILE_SIZE / 2. + PLAYER_START.x, -MAZE_SIZE * MAZE_TILE_SIZE / 2. + PLAYER_START.y);
-
-
+const MAZE_PT: mq::Vec2 = mq::vec2(
+    -MAZE_SIZE * MAZE_TILE_SIZE / 2. + PLAYER_START.x,
+    -MAZE_SIZE * MAZE_TILE_SIZE / 2. + PLAYER_START.y,
+);
 
 const DITHER: [i32; 16] = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
 const DITHER_SIZE: u32 = 4;
@@ -215,6 +215,7 @@ async fn main() {
                     if dist < light_powers[i] * 4.
                         || dist / light_powers[i] <= DITHER[dither_idx(x, y)] as f32
                     {
+                    // if true {
                         let screen_px_color = image_in.get_pixel(x, src_y);
                         image_out.set_pixel(
                             x,
