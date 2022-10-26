@@ -189,7 +189,18 @@ async fn main() {
         let mut image_out =
             mq::Image::gen_image_color(PX_WIDTH as u16, PX_HEIGHT as u16, COLOR_BLACK);
 
-        let mut draw_lights = lights.clone();
+        let mut draw_lights: Vec<Light> = lights
+            .clone()
+            .into_iter()
+            .filter(|light| {
+                let p = light.power * 16.;
+                let pt = cm.calc_offset(light.pt);
+                p + pt.x > 0.
+                    && p + pt.y > 0.
+                    && pt.x - p < PX_WIDTH as f32
+                    && pt.y - p < PX_HEIGHT as f32
+            })
+            .collect();
         draw_lights.push(player.light);
 
         let light_powers = draw_lights
