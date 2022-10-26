@@ -1,6 +1,6 @@
 use macroquad::prelude as mq;
 
-fn create_maze_map(
+pub fn create_maze_map(
     maze_size: f32,
     maze_start: mq::Vec2,
     color_white: mq::Color,
@@ -60,13 +60,12 @@ fn create_maze_map(
 }
 
 pub fn create_maze_texture(
+    maze_map: &mq::Image,
     maze_size: f32,
     maze_tile_size: f32,
-    maze_start: mq::Vec2,
     color_white: mq::Color,
     color_black: mq::Color,
 ) -> mq::Image {
-    let maze_map = create_maze_map(maze_size, maze_start, color_white, color_black);
     let mut maze_texture = mq::Image::gen_image_color(
         maze_size as u16 * maze_tile_size as u16,
         maze_size as u16 * maze_tile_size as u16,

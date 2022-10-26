@@ -87,10 +87,11 @@ async fn main() {
     // ---------------------------------------------------------------------- //
 
     // ---------------------------------------------------------------------- //
+    let maze_map = maze::create_maze_map(MAZE_SIZE, MAZE_START, COLOR_WHITE, COLOR_BLACK);
     let maze_image = maze::create_maze_texture(
+        &maze_map,
         MAZE_SIZE,
         MAZE_TILE_SIZE,
-        MAZE_START,
         COLOR_WHITE,
         COLOR_BLACK,
     );
