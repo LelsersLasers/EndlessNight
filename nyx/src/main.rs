@@ -4,6 +4,7 @@ mod light_modes;
 mod maze;
 mod player;
 mod toggle;
+mod util;
 
 use crate::{camera_manager::CameraManager, light::Light, light_modes::LightMode, player::Player};
 
@@ -20,7 +21,7 @@ const MAZE_START: mq::Vec2 = mq::vec2(
     ((MAZE_SIZE / 2.) as u32) as f32,
     ((MAZE_SIZE / 2.) as u32) as f32,
 );
-const MAZE_TILE_SIZE: f32 = 50.;
+const MAZE_TILE_SIZE: f32 = 40.;
 
 const PLAYER_W: f32 = 8.;
 const PLAYER_H: f32 = 10.;
@@ -139,6 +140,41 @@ async fn main() {
         // ------------------------------------------------------------------ //
         player.update(&mut cm, delta); // moves player
 
+        let world_d = player.pt - MAZE_PT;
+        let map_d = world_d / MAZE_TILE_SIZE;
+        let map_box_pt = mq::vec2(map_d.x.floor(), map_d.y.floor()) - mq::Vec2::ONE;
+        let world_box_pt = map_box_pt * MAZE_TILE_SIZE + MAZE_PT;
+
+        let mut wall_collide = false;
+        let mut c = None;
+        // todo: clean; x,y are idxs; flip Y??
+        for y in 0..3 {
+            for x in 0..3 {
+                if wall_collide {
+                    break;
+                }
+                let map_pt = map_box_pt + mq::vec2(x as f32, y as f32);
+                let map_px = maze_map.get_pixel(map_pt.x as u32, map_pt.y as u32);
+                if map_px == COLOR_WHITE {
+                    let world_pt = world_box_pt + mq::vec2(x as f32, y as f32) * MAZE_TILE_SIZE;
+                    let collision = util::check_collide(
+                        player.pt,
+                        player.w,
+                        player.h,
+                        world_pt,
+                        MAZE_TILE_SIZE,
+                        MAZE_TILE_SIZE,
+                    );
+                    match collision {
+                        Some(collision) => {
+                            wall_collide = true;
+                            c = Some(collision);
+                        }
+                        None => {}
+                    }
+                }
+            }
+        }
         // ------------------------------------------------------------------ //
 
         // ------------------------------------------------------------------ //
@@ -158,6 +194,16 @@ async fn main() {
             },
         );
 
+        let world_pt_cm = cm.calc_offset(world_box_pt);
+        mq::draw_rectangle_lines(
+            world_pt_cm.x,
+            world_pt_cm.y,
+            MAZE_TILE_SIZE * 3.,
+            MAZE_TILE_SIZE * 3.,
+            2.,
+            if wall_collide { mq::RED } else { mq::BLUE },
+        );
+
         // for object in objects.iter() {
         //     let obj_pt = cm.calc_offset(mq::vec2(object.x, object.y));
         //     mq::draw_rectangle(
@@ -175,6 +221,21 @@ async fn main() {
         }
 
         player.draw(COLOR_GOLD, &cm);
+
+        match c {
+            Some(collision) => {
+                let world_pt_cm = cm.calc_offset(mq::vec2(collision.x, collision.y));
+                mq::draw_rectangle_lines(
+                    world_pt_cm.x,
+                    world_pt_cm.y,
+                    collision.w,
+                    collision.h,
+                    2.,
+                    mq::GREEN,
+                );
+            }
+            None => {}
+        }
         // ------------------------------------------------------------------ //
 
         mq::set_camera(&mq::Camera2D::from_display_rect(mq::Rect::new(
@@ -221,10 +282,9 @@ async fn main() {
                     let dy = light_pts[i].y as i32 - y as i32;
                     let dist = ((dx * dx + dy * dy) as f32).sqrt();
 
-                    if dist < light_powers[i] * 4.
-                        || dist / light_powers[i] <= DITHER[dither_idx(x, y)] as f32
-                    {
-                        // if true {
+                    // if dist < light_powers[i] * 4.
+                    //     || dist / light_powers[i] <= DITHER[dither_idx(x, y)] as f32
+                    if true {
                         let screen_px_color = image_in.get_pixel(x, src_y);
                         image_out.set_pixel(
                             x,

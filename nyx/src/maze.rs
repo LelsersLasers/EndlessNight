@@ -90,7 +90,20 @@ pub fn create_maze_texture(
                         );
                     }
                 }
-            }
+            } /*else {
+                  for tile_x in 0..maze_tile_size as u32 {
+                      for tile_y in 0..maze_tile_size as u32 {
+                          if tile_y % 10 == 0 || tile_x % 10 == 0 || mq::rand::gen_range(0, 100) == 0
+                          {
+                              maze_texture.set_pixel(
+                                  x * maze_tile_size as u32 + tile_x,
+                                  y * maze_tile_size as u32 + tile_y,
+                                  color_black,
+                              );
+                          }
+                      }
+                  }
+              } */
         }
     }
 
