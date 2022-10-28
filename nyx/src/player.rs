@@ -126,4 +126,30 @@ impl Player {
         self.move_player(cm, delta);
         self.update_light_pt();
     }
+    pub fn collide(&mut self, cm: &mut CameraManager, other: mq::Rect) -> bool {
+        let rect = mq::Rect::new(self.pt.x, self.pt.y, self.w, self.h);
+        if let Some(overlap) = rect.intersect(other) {
+            let mut move_vec = mq::Vec2::ZERO;
+            if overlap.w > overlap.h {
+                if rect.y < other.y {
+                    move_vec.y = other.y - (rect.y + rect.h);
+                } else {
+                    move_vec.y = other.y + other.h - rect.y;
+                }
+            } else {
+                if rect.x < other.x {
+                    move_vec.x = other.x - (rect.x + rect.w);
+                } else {
+                    move_vec.x = other.x + other.w - rect.x;
+                }
+            }
+
+            self.pt += move_vec;
+            cm.pt += move_vec;
+            true
+        } else {
+            false
+        }
+        
+    }
 }

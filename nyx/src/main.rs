@@ -146,32 +146,39 @@ async fn main() {
         let world_box_pt = map_box_pt * MAZE_TILE_SIZE + MAZE_PT;
 
         let mut wall_collide = false;
-        let mut c = None;
-        // todo: clean; x,y are idxs; flip Y??
+        // let mut c: Option<mq::Rect> = None;
+        // let mut temp: Option<mq::Vec2> = None;
+        // todo: clean; flip Y??; after wall collide try next key
         for y in 0..3 {
             for x in 0..3 {
                 if wall_collide {
                     break;
                 }
                 let map_pt = map_box_pt + mq::vec2(x as f32, y as f32);
+                if map_pt.x < 0. || map_pt.y < 0. || map_pt.x >= MAZE_SIZE as f32 || map_pt.y >= MAZE_SIZE as f32 {
+                    continue;
+                }
                 let map_px = maze_map.get_pixel(map_pt.x as u32, map_pt.y as u32);
                 if map_px == COLOR_WHITE {
                     let world_pt = world_box_pt + mq::vec2(x as f32, y as f32) * MAZE_TILE_SIZE;
-                    let collision = util::check_collide(
-                        player.pt,
-                        player.w,
-                        player.h,
-                        world_pt,
-                        MAZE_TILE_SIZE,
-                        MAZE_TILE_SIZE,
-                    );
-                    match collision {
-                        Some(collision) => {
-                            wall_collide = true;
-                            c = Some(collision);
-                        }
-                        None => {}
-                    }
+                    // let collision = util::check_collide(
+                    //     player.pt,
+                    //     player.w,
+                    //     player.h,
+                    //     world_pt,
+                    //     MAZE_TILE_SIZE,
+                    //     MAZE_TILE_SIZE,
+                    // );
+                    // match collision {
+                    //     Some(collision) => {
+                    //         wall_collide = true;
+                    //         c = Some(collision);
+                    //         temp = Some(map_pt);
+                    //     }
+                    //     None => {}
+                    // }
+                    let tile_rect = mq::Rect::new(world_pt.x, world_pt.y, MAZE_TILE_SIZE, MAZE_TILE_SIZE);
+                    player.collide(&mut cm, tile_rect);
                 }
             }
         }
@@ -189,7 +196,7 @@ async fn main() {
             mq::WHITE,
             mq::DrawTextureParams {
                 dest_size: Some(mq::Vec2::splat(MAZE_SIZE * MAZE_TILE_SIZE)),
-                flip_y: true,
+                flip_y: false,
                 ..Default::default()
             },
         );
@@ -222,20 +229,33 @@ async fn main() {
 
         player.draw(COLOR_GOLD, &cm);
 
-        match c {
-            Some(collision) => {
-                let world_pt_cm = cm.calc_offset(mq::vec2(collision.x, collision.y));
-                mq::draw_rectangle_lines(
-                    world_pt_cm.x,
-                    world_pt_cm.y,
-                    collision.w,
-                    collision.h,
-                    2.,
-                    mq::GREEN,
-                );
-            }
-            None => {}
-        }
+        // match c {
+        //     Some(collision) => {
+        //         let world_pt_cm = cm.calc_offset(mq::vec2(collision.x, collision.y));
+        //         mq::draw_rectangle_lines(
+        //             world_pt_cm.x,
+        //             world_pt_cm.y,
+        //             collision.w,
+        //             collision.h,
+        //             2.,
+        //             mq::GREEN,
+        //         );
+        //     }
+        //     None => {}
+        // }
+        // match temp {
+        //     Some(map_pt) => {
+        //         mq::draw_rectangle_lines(
+        //             map_pt.x,
+        //             map_pt.y,
+        //             1.,
+        //             1.,
+        //             1.,
+        //             mq::YELLOW,
+        //         );
+        //     }
+        //     None => {}
+        // }
         // ------------------------------------------------------------------ //
 
         mq::set_camera(&mq::Camera2D::from_display_rect(mq::Rect::new(
