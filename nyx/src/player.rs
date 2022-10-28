@@ -11,6 +11,16 @@ pub enum DirKey {
     Left,
     Right,
 }
+impl DirKey {
+    pub fn opposite(&self) -> DirKey {
+        match *self {
+            DirKey::Up => DirKey::Down,
+            DirKey::Down => DirKey::Up,
+            DirKey::Left => DirKey::Right,
+            DirKey::Right => DirKey::Left,
+        }
+    }
+}
 
 pub struct Player {
     pub pt: mq::Vec2,
@@ -91,11 +101,7 @@ impl Player {
             (true, self.last_dir)
         } else {
             for k in self.keys.iter().rev() {
-                if (k == &DirKey::Up && !self.keys.contains(&DirKey::Down))
-                    || (k == &DirKey::Down && !self.keys.contains(&DirKey::Up))
-                    || (k == &DirKey::Right && !self.keys.contains(&DirKey::Left))
-                    || (k == &DirKey::Left && !self.keys.contains(&DirKey::Right))
-                {
+                if !self.keys.contains(&k.opposite()) {
                     self.last_dir = *k;
                     return (false, *k);
                 }

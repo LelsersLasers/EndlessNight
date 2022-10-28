@@ -303,7 +303,7 @@ async fn main() {
                     let dist = ((dx * dx + dy * dy) as f32).sqrt();
 
                     // if dist < light_powers[i] * 4.
-                    //     || dist / light_powers[i] <= DITHER[dither_idx(x, y)] as f32
+                    //     || dist / light_powers[i] <= DITHER[dither_idx(x, y)] as f32 {
                     if true {
                         let screen_px_color = image_in.get_pixel(x, src_y);
                         image_out.set_pixel(
