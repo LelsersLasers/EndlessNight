@@ -4,7 +4,7 @@ use crate::toggle::ToggleKey;
 
 use macroquad::prelude as mq;
 
-#[derive(PartialEq, Debug, Copy, Clone)]
+#[derive(PartialEq, Eq, Debug, Copy, Clone)]
 pub enum DirKey {
     Up,
     Down,
@@ -33,7 +33,9 @@ pub struct Player {
     pub down_tk: ToggleKey,
     pub left_tk: ToggleKey,
     pub right_tk: ToggleKey,
+
     pub last_dir: DirKey,
+    pub wall_dirs: Vec<DirKey>,
 }
 impl Player {
     pub fn new(pt: mq::Vec2, w: f32, h: f32, light: Light) -> Player {
@@ -48,14 +50,29 @@ impl Player {
             left_tk: ToggleKey::new(),
             right_tk: ToggleKey::new(),
             last_dir: DirKey::Right,
+            wall_dirs: vec![],
         }
     }
     pub fn update_light_pt(&mut self) {
         self.light.pt = self.pt + mq::vec2(self.w, self.h) / 2.;
     }
-    pub fn draw(&self, color: mq::Color, cm: &CameraManager) {
+    pub fn draw(&mut self, color: mq::Color, cm: &CameraManager) {
         let pt = cm.calc_offset(self.pt);
-        mq::draw_rectangle(pt.x, pt.y, self.w, self.h, color)
+
+        let (dir_color, dir) = match self.calc_dir() {
+            (false, d) => (mq::BLUE, d),
+            (true, d) => (mq::RED, d),
+        };
+        let center = pt + mq::vec2(self.w, self.h) / 2.;
+        let dir_pt = match dir {
+            DirKey::Up => center + mq::vec2(0., -self.h),
+            DirKey::Down => center + mq::vec2(0., self.h),
+            DirKey::Left => center + mq::vec2(-self.w, 0.),
+            DirKey::Right => center + mq::vec2(self.w, 0.),
+        };
+
+        mq::draw_rectangle(pt.x, pt.y, self.w, self.h, color);
+        mq::draw_line(center.x, center.y, dir_pt.x, dir_pt.y, 2., dir_color);
     }
     fn set_keys_down(&mut self) {
         let up = self
@@ -131,8 +148,11 @@ impl Player {
         self.set_keys_down();
         self.move_player(cm, delta);
         self.update_light_pt();
+
+        
+        self.wall_dirs.clear();
     }
-    pub fn collide(&mut self, cm: &mut CameraManager, other: mq::Rect) -> bool {
+    pub fn collide_immovable(&mut self, cm: &mut CameraManager, other: mq::Rect) -> bool {
         let rect = mq::Rect::new(self.pt.x, self.pt.y, self.w, self.h);
         if let Some(overlap) = rect.intersect(other) {
             let mut move_vec = mq::Vec2::ZERO;
@@ -142,12 +162,16 @@ impl Player {
                 } else {
                     move_vec.y = other.y + other.h - rect.y;
                 }
+            } else if rect.x < other.x {
+                move_vec.x = other.x - (rect.x + rect.w);
             } else {
-                if rect.x < other.x {
-                    move_vec.x = other.x - (rect.x + rect.w);
-                } else {
-                    move_vec.x = other.x + other.w - rect.x;
-                }
+                move_vec.x = other.x + other.w - rect.x;
+            }
+
+            let dir = self.calc_dir();
+            match dir {
+                (false, k) => self.wall_dirs.push(k),
+                (true, _) => {}
             }
 
             self.pt += move_vec;
@@ -156,6 +180,5 @@ impl Player {
         } else {
             false
         }
-        
     }
 }
