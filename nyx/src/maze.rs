@@ -90,20 +90,27 @@ pub fn create_maze_texture(
                         );
                     }
                 }
-            } /*else {
-                  for tile_x in 0..maze_tile_size as u32 {
-                      for tile_y in 0..maze_tile_size as u32 {
-                          if tile_y % 10 == 0 || tile_x % 10 == 0 || mq::rand::gen_range(0, 100) == 0
-                          {
-                              maze_texture.set_pixel(
-                                  x * maze_tile_size as u32 + tile_x,
-                                  y * maze_tile_size as u32 + tile_y,
-                                  color_black,
-                              );
-                          }
-                      }
-                  }
-              } */
+            } else {
+                for tile_x in 0..maze_tile_size as u32 {
+                    for tile_y in 0..maze_tile_size as u32 {
+                        if tile_x != 0
+                            && tile_x != (maze_tile_size - 1.) as u32
+                            && tile_y != 0
+                            && tile_y != (maze_tile_size - 1.) as u32
+                            && (tile_x == 1
+                                || tile_x as i32 == maze_tile_size as i32 - 2
+                                || tile_y == 1
+                                || tile_y as i32 == maze_tile_size as i32 - 2)
+                        {
+                            maze_texture.set_pixel(
+                                x * maze_tile_size as u32 + tile_x,
+                                y * maze_tile_size as u32 + tile_y,
+                                color_black,
+                            );
+                        }
+                    }
+                }
+            }
         }
     }
 
