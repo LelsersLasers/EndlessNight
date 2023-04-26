@@ -4,7 +4,7 @@ mod light_modes;
 mod maze;
 mod player;
 mod toggle;
-mod util;
+// mod util;
 
 use crate::{camera_manager::CameraManager, light::Light, light_modes::LightMode, player::Player};
 
@@ -146,6 +146,7 @@ async fn main() {
         let world_box_pt = map_box_pt * MAZE_TILE_SIZE + MAZE_PT;
 
         let mut wall_collide = false;
+        let mut cs: Vec<mq::Rect> = vec![];
         // todo: clean; flip Y??; after wall collide try next key
         for y in 0..3 {
             for x in 0..3 {
@@ -162,7 +163,11 @@ async fn main() {
                     let world_pt = world_box_pt + mq::vec2(x as f32, y as f32) * MAZE_TILE_SIZE;
                     let tile_rect =
                         mq::Rect::new(world_pt.x, world_pt.y, MAZE_TILE_SIZE, MAZE_TILE_SIZE);
-                    wall_collide = player.collide_immovable(&mut cm, tile_rect) || wall_collide;
+                    let wc = player.collide_immovable(&mut cm, tile_rect);
+                    wall_collide = wc || wall_collide;
+                    if wc {
+                        cs.push(tile_rect);
+                    }
                 }
             }
         }
@@ -194,6 +199,10 @@ async fn main() {
             2.,
             if wall_collide { mq::RED } else { mq::BLUE },
         );
+        for c in cs {
+            let world_pt = cm.calc_offset(mq::vec2(c.x, c.y));
+            mq::draw_rectangle_lines(world_pt.x, world_pt.y, c.w, c.h, 2., mq::RED);
+        }
 
         // for object in objects.iter() {
         //     let obj_pt = cm.calc_offset(mq::vec2(object.x, object.y));
@@ -308,6 +317,8 @@ async fn main() {
             },
         );
         // ------------------------------------------------------------------ //
+
+        println!("{:?} {:?}", player.keys, player.wall_dirs);
 
         mq::next_frame().await
     }

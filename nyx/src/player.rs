@@ -59,7 +59,7 @@ impl Player {
     pub fn draw(&mut self, color: mq::Color, cm: &CameraManager) {
         let pt = cm.calc_offset(self.pt);
 
-        let (dir_color, dir) = match self.calc_dir() {
+        let (dir_color, dir) = match self.calc_dir_with_wall() {
             (false, d) => (mq::BLUE, d),
             (true, d) => (mq::RED, d),
         };
@@ -113,12 +113,29 @@ impl Player {
         }
     }
     fn calc_dir(&mut self) -> (bool, DirKey) {
-        // return: (is_moving, dir)
+        // return: (is_not_moving, dir)
         if self.keys.is_empty() {
             (true, self.last_dir)
         } else {
             for k in self.keys.iter().rev() {
-                if !self.keys.contains(&k.opposite()) {
+                if !self.keys.contains(&k.opposite()) { //&& !self.wall_dirs.contains(k) {
+                    self.last_dir = *k;
+                    return (false, *k);
+                }
+            }
+            (true, self.last_dir)
+        }
+    }
+    fn calc_dir_with_wall(&mut self) -> (bool, DirKey) {
+        // return: (is_not_moving, dir)
+        if self.keys.is_empty() {
+            (true, self.last_dir)
+        } else {
+            if self.keys.len() == 1 {
+                self.wall_dirs.clear();
+            }
+            for k in self.keys.iter().rev() {
+                if !self.keys.contains(&k.opposite()) && !self.wall_dirs.contains(k) {
                     self.last_dir = *k;
                     return (false, *k);
                 }
@@ -128,7 +145,7 @@ impl Player {
     }
     fn move_player(&mut self, cm: &mut CameraManager, delta: f32) {
         let mut move_vec = mq::Vec2::ZERO;
-        match self.calc_dir() {
+        match self.calc_dir_with_wall() {
             (false, DirKey::Up) => move_vec.y -= 1.,
             (false, DirKey::Down) => move_vec.y += 1.,
             (false, DirKey::Right) => move_vec.x += 1.,
@@ -149,7 +166,6 @@ impl Player {
         self.move_player(cm, delta);
         self.update_light_pt();
 
-        
         self.wall_dirs.clear();
     }
     pub fn collide_immovable(&mut self, cm: &mut CameraManager, other: mq::Rect) -> bool {
@@ -170,7 +186,11 @@ impl Player {
 
             let dir = self.calc_dir();
             match dir {
-                (false, k) => self.wall_dirs.push(k),
+                (false, k) => {
+                    if self.keys.contains(&k) && !self.wall_dirs.contains(&k) {
+                        self.wall_dirs.push(k);
+                    }
+                }
                 (true, _) => {}
             }
 
